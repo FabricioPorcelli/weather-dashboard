@@ -12,6 +12,7 @@
   --color-text: #e2e8f0;
   --color-muted: #94a3b8;
   --color-accent: #38bdf8;
+  --color-warm: #fb923c;
   --panel-width: 340px;
   --radius: 14px;
 }
@@ -131,6 +132,61 @@ body {
   margin: 0;
   font-size: 0.75rem;
   color: var(--color-muted);
+}
+
+/* --- Pronóstico ----------------------------------------------------------- */
+
+.card__title {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+.chart {
+  position: relative;
+  height: 200px;
+  margin-bottom: 16px;
+}
+
+.days {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.day__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.day__date {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.day__conditions {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.day__temps {
+  white-space: nowrap;
+  font-size: 0.95rem;
 }
 
 /* En pantallas angostas el panel pasa a la parte inferior */

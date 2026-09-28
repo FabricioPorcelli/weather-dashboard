@@ -15,6 +15,8 @@ const humidityEl = document.querySelector('#current-humidity');
 const windEl = document.querySelector('#current-wind');
 const precipEl = document.querySelector('#current-precip');
 const updatedEl = document.querySelector('#current-updated');
+const forecastCardEl = document.querySelector('#forecast-card');
+const daysEl = document.querySelector('#forecast-days');
 
 /**
  * Muestra las coordenadas de la ubicación elegida.
@@ -33,6 +35,7 @@ export function showLoading() {
   statusEl.classList.remove('panel__hint--error');
   statusEl.textContent = 'Consultando la API…';
   cardEl.hidden = true;
+  forecastCardEl.hidden = true;
 }
 
 /**
@@ -44,6 +47,7 @@ export function showError(message) {
   statusEl.classList.add('panel__hint--error');
   statusEl.textContent = message;
   cardEl.hidden = true;
+  forecastCardEl.hidden = true;
 }
 
 /**
@@ -78,5 +82,61 @@ function formatDateTime(isoDate) {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+  });
+}
+
+/**
+ * Renderiza la lista de días del pronóstico.
+ *
+ * @param {object} data Respuesta de /v1/forecast/coords/...
+ */
+export function renderForecast(data) {
+  daysEl.replaceChildren(...data.days.map(createDayItem));
+  forecastCardEl.hidden = false;
+}
+
+/**
+ * Crea el elemento <li> de un día del pronóstico.
+ *
+ * @param {object} day Día de la respuesta de /v1/forecast/coords/...
+ * @returns {HTMLLIElement}
+ */
+function createDayItem(day) {
+  const item = document.createElement('li');
+  item.className = 'day';
+
+  const info = document.createElement('div');
+  info.className = 'day__info';
+
+  const date = document.createElement('span');
+  date.className = 'day__date';
+  date.textContent = formatDayLong(day.date);
+
+  const conditions = document.createElement('span');
+  conditions.className = 'day__conditions';
+  conditions.textContent = `${day.conditions} · Lluvia ${day.precipitation_probability}%`;
+
+  info.append(date, conditions);
+
+  const temps = document.createElement('div');
+  temps.className = 'day__temps';
+  temps.textContent = `${Math.round(day.temp_max_c)}° / ${Math.round(day.temp_min_c)}°`;
+
+  item.append(info, temps);
+  return item;
+}
+
+/**
+ * Formatea "2026-09-25" como "viernes 25 sep" en horario local.
+ * Se agrega T00:00:00 para que la fecha no se corra un día por la zona horaria.
+ *
+ * @param {string} isoDate
+ * @returns {string}
+ */
+function formatDayLong(isoDate) {
+  return new Date(`${isoDate}T00:00:00`).toLocaleDateString('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
   });
 }

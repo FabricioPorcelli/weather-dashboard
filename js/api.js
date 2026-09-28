@@ -4,7 +4,7 @@
  * traducción de errores a objetos ApiError con un mensaje mostrable.
  */
 
-import { API_BASE_URL } from './config.js';
+import { API_BASE_URL, FORECAST_DAYS } from './config.js';
 
 /**
  * Error de la API con el código HTTP asociado.
@@ -74,4 +74,15 @@ async function readErrorDetail(response) {
  */
 export function getCurrentWeather(lat, lon) {
   return request(`/v1/weather/coords/${lat}/${lon}`);
+}
+
+/**
+ * Obtiene el pronóstico de los próximos días para un par de coordenadas.
+ *
+ * @param {number} lat
+ * @param {number} lon
+ * @returns {Promise<{ data: object, cache: string | null }>}
+ */
+export function getForecast(lat, lon) {
+  return request(`/v1/forecast/coords/${lat}/${lon}?days=${FORECAST_DAYS}`);
 }

@@ -51,14 +51,29 @@
       </dl>
       <p class="card__updated" id="current-updated"></p>
     </section>
+
+    <!-- Pronóstico: gráfico de temperaturas y lista de días -->
+    <section class="card" id="forecast-card" hidden>
+      <h2 class="card__title">Próximos días</h2>
+      <div class="chart">
+        <canvas
+          id="forecast-chart"
+          role="img"
+          aria-label="Temperaturas máximas y mínimas del pronóstico"
+        ></canvas>
+      </div>
+      <ul class="days" id="forecast-days"></ul>
+    </section>
   </aside>
 
-  <!-- Leaflet (CDN): debe cargarse antes que los módulos que usan el global L -->
+  <!-- Leaflet y Chart.js (CDN): deben cargarse antes que los módulos que usan
+       los globales `L` y `Chart` -->
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
