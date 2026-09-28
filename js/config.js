@@ -17,6 +17,9 @@ export const FORECAST_DAYS = 5;
  */
 export const COORD_DECIMALS = 2;
 
+/** Zoom al que se centra una ciudad buscada por nombre. */
+export const CITY_ZOOM = 13;
+
 /** Vista inicial del mapa: Buenos Aires. */
 export const INITIAL_VIEW = {
   lat: -34.6,
