@@ -21,7 +21,21 @@
   <!-- Panel lateral: resumen de la ubicación elegida -->
   <aside class="panel">
     <h1 class="panel__title">Weather Dashboard</h1>
-    <p class="panel__hint" id="status">Hacé clic en el mapa para elegir una ubicación.</p>
+
+    <!-- Búsqueda por ciudad: se geocodifica con Nominatim y se consulta por nombre -->
+    <form class="search" id="search-form" autocomplete="off">
+      <input
+        class="search__input"
+        id="search-input"
+        type="search"
+        name="city"
+        placeholder="Buscar ciudad (ej. Madrid)"
+        aria-label="Nombre de la ciudad"
+      >
+      <button class="search__button" type="submit">Buscar</button>
+    </form>
+
+    <p class="panel__hint" id="status">Hacé clic en el mapa o buscá una ciudad.</p>
     <p class="panel__coords" id="coords"></p>
 
     <!-- Tarjeta de clima actual: se muestra cuando la API responde -->

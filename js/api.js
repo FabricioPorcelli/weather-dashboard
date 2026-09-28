@@ -86,3 +86,23 @@ export function getCurrentWeather(lat, lon) {
 export function getForecast(lat, lon) {
   return request(`/v1/forecast/coords/${lat}/${lon}?days=${FORECAST_DAYS}`);
 }
+
+/**
+ * Obtiene el clima actual para una ciudad.
+ *
+ * @param {string} city
+ * @returns {Promise<{ data: object, cache: string | null }>}
+ */
+export function getCurrentWeatherByCity(city) {
+  return request(`/v1/weather/${encodeURIComponent(city)}`);
+}
+
+/**
+ * Obtiene el pronóstico para una ciudad.
+ *
+ * @param {string} city
+ * @returns {Promise<{ data: object, cache: string | null }>}
+ */
+export function getForecastByCity(city) {
+  return request(`/v1/forecast/${encodeURIComponent(city)}?days=${FORECAST_DAYS}`);
+}

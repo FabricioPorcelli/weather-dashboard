@@ -76,6 +76,51 @@ body {
   font-size: 0.95rem;
 }
 
+/* --- Búsqueda por ciudad -------------------------------------------------- */
+
+.search {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  color: var(--color-text);
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.search__input::placeholder {
+  color: var(--color-muted);
+}
+
+.search__input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.search__button {
+  padding: 8px 14px;
+  color: #0f172a;
+  background: var(--color-accent);
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.search__button:hover {
+  filter: brightness(1.1);
+}
+
 /* --- Tarjeta de clima actual --------------------------------------------- */
 
 .card {

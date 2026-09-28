@@ -58,3 +58,15 @@ export function placeMarker(lat, lon) {
   }
   marker = L.marker([lat, lon]).addTo(map);
 }
+
+/**
+ * Centra el mapa en un punto. Si no se indica zoom, mantiene el actual pero
+ * con un mínimo de 10 para que el resultado se vea a escala de ciudad.
+ *
+ * @param {number} lat
+ * @param {number} lon
+ * @param {number} [zoom]
+ */
+export function centerOn(lat, lon, zoom) {
+  map.setView([lat, lon], zoom ?? Math.max(map.getZoom(), 10));
+}
