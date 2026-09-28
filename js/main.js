@@ -5,24 +5,29 @@
  * así que el DOM ya está disponible acá.
  */
 
+import { getCurrentWeather } from './api.js';
 import { initMap } from './map.js';
+import { renderCurrentWeather, setSelectedCoords, showError, showLoading } from './ui.js';
 
-const statusEl = document.querySelector('#status');
-const coordsEl = document.querySelector('#coords');
+/** Número de la última petición; permite descartar respuestas que llegan tarde. */
+let requestId = 0;
 
-/**
- * Formatea coordenadas con cuatro decimales para mostrarlas en el panel.
- *
- * @param {number} lat
- * @param {number} lon
- * @returns {string}
- */
-function formatCoords(lat, lon) {
-  return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-}
+initMap(async (lat, lon) => {
+  setSelectedCoords(lat, lon);
+  showLoading();
 
-initMap((lat, lon) => {
-  statusEl.textContent = 'Coordenadas seleccionadas:';
-  coordsEl.textContent = formatCoords(lat, lon);
-  console.log('Clic en el mapa:', lat, lon);
+  const currentRequest = ++requestId;
+
+  try {
+    const { data } = await getCurrentWeather(lat, lon);
+    if (currentRequest !== requestId) {
+      return; // Hay un clic más nuevo: esta respuesta quedó vieja.
+    }
+    renderCurrentWeather(data);
+  } catch (error) {
+    if (currentRequest !== requestId) {
+      return;
+    }
+    showError(error.message);
+  }
 });

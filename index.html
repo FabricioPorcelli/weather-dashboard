@@ -18,11 +18,39 @@
   <!-- Contenedor del mapa: ocupa toda la pantalla -->
   <div id="map" role="application" aria-label="Mapa para elegir una ubicación"></div>
 
-  <!-- Panel lateral: por ahora solo confirma la ubicación elegida -->
+  <!-- Panel lateral: resumen de la ubicación elegida -->
   <aside class="panel">
     <h1 class="panel__title">Weather Dashboard</h1>
     <p class="panel__hint" id="status">Hacé clic en el mapa para elegir una ubicación.</p>
     <p class="panel__coords" id="coords"></p>
+
+    <!-- Tarjeta de clima actual: se muestra cuando la API responde -->
+    <section class="card" id="current-card" hidden>
+      <h2 class="card__location" id="current-location"></h2>
+      <p class="card__temp">
+        <span id="current-temp"></span><span class="card__unit">°C</span>
+      </p>
+      <p class="card__conditions" id="current-conditions"></p>
+      <dl class="card__details">
+        <div>
+          <dt>Sensación</dt>
+          <dd id="current-feels-like"></dd>
+        </div>
+        <div>
+          <dt>Humedad</dt>
+          <dd id="current-humidity"></dd>
+        </div>
+        <div>
+          <dt>Viento</dt>
+          <dd id="current-wind"></dd>
+        </div>
+        <div>
+          <dt>Precipitación</dt>
+          <dd id="current-precip"></dd>
+        </div>
+      </dl>
+      <p class="card__updated" id="current-updated"></p>
+    </section>
   </aside>
 
   <!-- Leaflet (CDN): debe cargarse antes que los módulos que usan el global L -->

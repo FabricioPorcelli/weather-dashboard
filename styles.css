@@ -64,11 +64,73 @@ body {
   line-height: 1.4;
 }
 
+.panel__hint--error {
+  color: #f87171;
+}
+
 .panel__coords {
   margin: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: var(--color-accent);
   font-size: 0.95rem;
+}
+
+/* --- Tarjeta de clima actual --------------------------------------------- */
+
+.card {
+  margin-top: 18px;
+}
+
+.card__location {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+
+.card__temp {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.card__unit {
+  margin-top: 6px;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.card__conditions {
+  margin: 6px 0 16px;
+  color: var(--color-muted);
+}
+
+.card__details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin: 0 0 16px;
+}
+
+.card__details dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.card__details dd {
+  margin: 2px 0 0;
+  font-size: 0.95rem;
+}
+
+.card__updated {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-muted);
 }
 
 /* En pantallas angostas el panel pasa a la parte inferior */
