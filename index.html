@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Dashboard</title>
+
+  <!-- Leaflet (CDN): hoja de estilos del mapa -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Contenedor del mapa: ocupa toda la pantalla -->
+  <div id="map" role="application" aria-label="Mapa para elegir una ubicación"></div>
+
+  <!-- Panel lateral: por ahora solo confirma la ubicación elegida -->
+  <aside class="panel">
+    <h1 class="panel__title">Weather Dashboard</h1>
+    <p class="panel__hint" id="status">Hacé clic en el mapa para elegir una ubicación.</p>
+    <p class="panel__coords" id="coords"></p>
+  </aside>
+
+  <!-- Leaflet (CDN): debe cargarse antes que los módulos que usan el global L -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

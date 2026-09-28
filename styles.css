@@ -1,0 +1,84 @@
+/* ==========================================================================
+   Weather Dashboard — estilos base
+   Fase 1: mapa a pantalla completa + panel lateral flotante.
+   Los colores viven en variables CSS para reutilizarlos cuando agreguemos
+   el tema claro/oscuro (Fase 5).
+   ========================================================================== */
+
+:root {
+  --color-bg: #0f172a;
+  --color-panel: rgba(15, 23, 42, 0.92);
+  --color-border: rgba(148, 163, 184, 0.25);
+  --color-text: #e2e8f0;
+  --color-muted: #94a3b8;
+  --color-accent: #38bdf8;
+  --panel-width: 340px;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+.panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  width: var(--panel-width);
+  padding: 20px;
+  overflow-y: auto;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  /* Leaflet usa z-index 1000 en sus controles; el panel va al mismo nivel
+     y, al estar después en el DOM, se dibuja por encima. */
+  z-index: 1000;
+}
+
+.panel__title {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+}
+
+.panel__hint {
+  margin: 0 0 12px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.panel__coords {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--color-accent);
+  font-size: 0.95rem;
+}
+
+/* En pantallas angostas el panel pasa a la parte inferior */
+@media (max-width: 640px) {
+  .panel {
+    top: auto;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+    max-height: 45vh;
+  }
+}
