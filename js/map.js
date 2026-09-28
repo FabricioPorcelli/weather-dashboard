@@ -3,7 +3,7 @@
  * Leaflet se carga por CDN en index.html y queda disponible como global `L`.
  */
 
-import { INITIAL_VIEW } from './config.js';
+import { COORD_DECIMALS, INITIAL_VIEW } from './config.js';
 
 /** @type {L.Map | null} Instancia del mapa (null hasta llamar a initMap). */
 let map = null;
@@ -26,10 +26,23 @@ export function initMap(onLocationSelected) {
   }).addTo(map);
 
   map.on('click', (event) => {
-    const { lat, lng } = event.latlng;
-    placeMarker(lat, lng);
-    onLocationSelected(lat, lng);
+    const lat = roundCoord(event.latlng.lat);
+    const lon = roundCoord(event.latlng.lng);
+    placeMarker(lat, lon);
+    onLocationSelected(lat, lon);
   });
+}
+
+/**
+ * Redondea una coordenada a la precisión que usa la API.
+ * Así el marcador, las coordenadas mostradas y la consulta coinciden, y los
+ * clics dentro de la misma celda (~1 km) no generan requests distintos.
+ *
+ * @param {number} value
+ * @returns {number}
+ */
+function roundCoord(value) {
+  return Number(value.toFixed(COORD_DECIMALS));
 }
 
 /**
