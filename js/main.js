@@ -89,7 +89,9 @@ initMap(async (lat, lon) => {
   const current = await loadWeather(getCurrentWeather(lat, lon), getForecast(lat, lon));
 
   if (!current) {
-    lastQueryKey = null; // Permite reintentar el mismo punto.
+    if (lastQueryKey === queryKey) {
+      lastQueryKey = null; // Permite reintentar el mismo punto.
+    }
     return;
   }
 
@@ -116,7 +118,9 @@ searchForm.addEventListener('submit', async (event) => {
   try {
     const place = await geocodeCity(city);
     if (!place) {
-      lastQueryKey = null;
+      if (lastQueryKey === queryKey) {
+        lastQueryKey = null;
+      }
       showError(`No encontramos “${city}”. Probá con otro nombre.`);
       return;
     }
@@ -127,14 +131,18 @@ searchForm.addEventListener('submit', async (event) => {
 
     const current = await loadWeather(getCurrentWeatherByCity(city), getForecastByCity(city));
     if (!current) {
-      lastQueryKey = null;
+      if (lastQueryKey === queryKey) {
+        lastQueryKey = null;
+      }
       return;
     }
 
     saveLastLocation({ lat: place.lat, lon: place.lon, label: current.location, zoom: CITY_ZOOM });
   } catch (error) {
-    lastQueryKey = null;
-    showError(error.message);
+    if (lastQueryKey === queryKey) {
+      lastQueryKey = null;
+    }
+    showError(error);
   }
 });
 
