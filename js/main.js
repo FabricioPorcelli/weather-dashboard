@@ -17,6 +17,7 @@ import { CITY_ZOOM } from './config.js';
 import { geocodeCity } from './geocode.js';
 import { centerOn, getZoom, initMap, placeMarker, setMapTheme } from './map.js';
 import { loadLastLocation, saveLastLocation } from './storage.js';
+import { formatPlaceName } from './text.js';
 import {
   initTheme,
   renderCacheBadges,
@@ -101,11 +102,12 @@ initMap(async (lat, lon) => {
 searchForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  const city = searchInput.value.trim();
+  const city = formatPlaceName(searchInput.value);
   if (!city) {
     showError('Escribí el nombre de una ciudad para buscar.');
     return;
   }
+  searchInput.value = city; // Muestra el texto normalizado en el input.
 
   const queryKey = `city:${city.toLowerCase()}`;
   if (queryKey === lastQueryKey) {

@@ -1,20 +1,10 @@
 # Weather Dashboard
 
-Dashboard web estático que muestra el clima actual y el pronóstico de 5 días de
-una ubicación elegida en un mapa. Consume la **Weather API** (proyecto separado
-que envuelve Visual Crossing) y usa Leaflet y Chart.js por CDN, **sin frameworks,
-sin build y sin `node_modules`**: el objetivo es practicar `fetch`, DOM y el
-ciclo request/response.
+Dashboard web estático que muestra el clima actual y el pronóstico de 5 días de una ubicación elegida en un mapa. Consume la **Weather API** (proyecto separado que envuelve Visual Crossing) y usa Leaflet y Chart.js por CDN, **sin frameworks, sin build y sin `node_modules`**: el objetivo es practicar `fetch`, DOM y el ciclo request/response.
 
-> Repo de la API: _pendiente de publicar_. Instrucciones para levantarla más abajo.
+> Repo de la API: https://github.com/FabricioPorcelli/weather-api. Instrucciones para levantarla más abajo.
 
-<!--
-Para agregar una captura:
-1. Abrí el dashboard y sacá una captura de pantalla.
-2. Guardala como docs/screenshot.png.
-3. Descomentá la línea de abajo.
 ![Captura del dashboard](docs/screenshot.png)
--->
 
 ## Funcionalidades
 
@@ -33,7 +23,21 @@ Para agregar una captura:
 - HTML, CSS y JavaScript vanilla con **ES Modules**.
 - [Leaflet 1.9.4](https://leafletjs.com/) (mapa) y [Chart.js 4.4.7](https://www.chartjs.org/) (gráfico), por CDN.
 - [Nominatim](https://nominatim.org/) (OpenStreetMap) para convertir nombres de ciudades en coordenadas.
-- [Weather API](http://localhost:8000/docs) local (FastAPI + Redis) como fuente de datos.
+- [Weather API](https://github.com/FabricioPorcelli/weather-api) (FastAPI + Redis) como fuente de datos, corriendo en `localhost:8000`.
+
+## Decisiones técnicas
+
+- **Sin frameworks ni build**: HTML, CSS y JavaScript vanilla con ES Modules;
+  el foco está en el ciclo request/response y el DOM, no en herramientas.
+- **Coordenadas redondeadas y dedupe**: se redondea a 2 decimales (igual que la
+  API) y no se repite el request si el punto no cambió; así se aprovecha la
+  caché y se cuida el rate limit.
+- **Errores por código HTTP**: la UI traduce 404, 422, 429, 502, 504 y caída de
+  la API a mensajes claros, y descarta respuestas viejas con un `requestId`.
+- **APIs públicas con respeto**: Nominatim se consulta solo con acción explícita
+  del usuario, con caché en memoria y espera de 1 req/s según su política.
+- **Separación por módulos**: `api`, `geocode`, `map`, `chart`, `ui`, `storage`
+  y `main` con una única dirección de dependencias; la UI no conoce detalles de HTTP.
 
 ## Requisitos
 
@@ -112,6 +116,7 @@ weather-dashboard/
 │   ├── config.js   # constantes compartidas
 │   ├── storage.js  # persistencia en localStorage (tema y última ubicación)
 │   ├── api.js      # fetch a la Weather API, errores tipados y X-Cache
+│   ├── text.js     # normalización de nombres de lugares
 │   ├── geocode.js  # búsqueda de ciudades en Nominatim
 │   ├── map.js      # Leaflet: mapa, marcador, recentrado y tema de los tiles
 │   ├── chart.js    # gráfico de máximas/mínimas con Chart.js
@@ -144,14 +149,15 @@ dashboard muestra en pantalla.
 - **`localStorage`**: `weather-dashboard:theme` y
   `weather-dashboard:last-location`. Borralas para volver al estado inicial.
 
-## Deploy (futuro)
+## Despliegue
 
-El dashboard es estático: puede publicarse gratis en GitHub Pages, Netlify o
-Vercel. Requiere:
+El dashboard es estático y puede publicarse gratis en GitHub Pages, Netlify o
+Vercel. Para que funcione en un dominio público:
 
-1. La Weather API hosteada en un dominio público.
-2. `CORS_ORIGINS` de la API apuntando al dominio real del dashboard.
+1. Hostear la Weather API (Render, Railway, Fly.io, etc.).
+2. Setear `CORS_ORIGINS` en la API con el dominio real del dashboard.
+3. Apuntar `API_BASE_URL` en `js/config.js` al dominio de la API.
 
-Si en el futuro la API pide autenticación, un frontend estático no puede
-guardar la API key (todo lo que llega al navegador es visible): haría falta un
-backend-for-frontend o tokens de corta vida.
+La `WEATHER_API_KEY` vive únicamente en el backend de la API: al ser un
+frontend estático, todo lo que llega al navegador es visible, así que ninguna
+credencial debe incluirse en este repo.

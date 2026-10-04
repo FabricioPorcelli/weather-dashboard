@@ -5,6 +5,7 @@
  */
 
 import { loadTheme, saveTheme } from './storage.js';
+import { formatPlaceName } from './text.js';
 
 const statusEl = document.querySelector('#status');
 const coordsEl = document.querySelector('#coords');
@@ -87,7 +88,7 @@ function messageForError(error) {
 export function renderCurrentWeather(data) {
   statusEl.classList.remove('panel__hint--error');
   statusEl.textContent = '';
-  locationEl.textContent = data.location;
+  locationEl.textContent = formatPlaceName(data.location);
   tempEl.textContent = Math.round(data.temperature_c);
   conditionsEl.textContent = data.conditions;
   feelsLikeEl.textContent = `${data.feels_like_c.toFixed(1)} °C`;
