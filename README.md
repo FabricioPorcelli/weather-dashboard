@@ -110,8 +110,11 @@ Todo lo ajustable está en `js/config.js`:
 
 ```
 weather-dashboard/
-├── index.html      # estructura, CDN de Leaflet/Chart.js y entrada del módulo
+├── index.html      # estructura, metadatos, CDN y entrada del módulo
 ├── styles.css      # layout, tarjetas y temas claro/oscuro con variables CSS
+├── favicon.svg     # icono del proyecto
+├── docs/
+│   └── screenshot.png  # captura usada en este README
 ├── js/
 │   ├── config.js   # constantes compartidas
 │   ├── storage.js  # persistencia en localStorage (tema y última ubicación)
