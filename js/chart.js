@@ -7,16 +7,12 @@
 /** @type {Chart | null} Instancia activa; se destruye antes de redibujar. */
 let chart = null;
 
-/** Últimos días renderizados; permiten redibujar el gráfico al cambiar el tema. */
-let lastDays = null;
-
 /**
  * Dibuja el gráfico de temperaturas máximas y mínimas del pronóstico.
  *
  * @param {Array<object>} days Días de la respuesta de /v1/forecast/coords/...
  */
 export function renderForecastChart(days) {
-  lastDays = days;
   const labels = days.map((day) => formatDay(day.date));
   const textColor = cssVar('--color-text');
   const mutedColor = cssVar('--color-muted');
@@ -94,11 +90,25 @@ function cssVar(name) {
 }
 
 /**
- * Redibuja el gráfico con los colores del tema actual.
+ * Actualiza los colores del gráfico al tema actual sin recrearlo.
+ * Chart.js anima el cambio de colores, así el traspaso no es brusco.
  * No hace nada si todavía no se renderizó ningún pronóstico.
  */
 export function refreshChartTheme() {
-  if (lastDays) {
-    renderForecastChart(lastDays);
+  if (!chart) {
+    return;
   }
+
+  chart.options.plugins.legend.labels.color = cssVar('--color-text');
+  chart.options.scales.x.ticks.color = cssVar('--color-muted');
+  chart.options.scales.x.grid.color = cssVar('--color-border');
+  chart.options.scales.y.ticks.color = cssVar('--color-muted');
+  chart.options.scales.y.grid.color = cssVar('--color-border');
+
+  chart.data.datasets[0].borderColor = cssVar('--color-warm');
+  chart.data.datasets[0].backgroundColor = cssVar('--color-warm');
+  chart.data.datasets[1].borderColor = cssVar('--color-accent');
+  chart.data.datasets[1].backgroundColor = cssVar('--color-accent');
+
+  chart.update();
 }

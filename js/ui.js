@@ -207,10 +207,47 @@ export function initTheme() {
 
   themeButton.addEventListener('click', () => {
     const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-    applyTheme(next);
-    saveTheme(next);
-    document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: next } }));
+    switchTheme(next);
   });
+}
+
+/**
+ * Cambia el tema con un fundido: cubre la pantalla con el color de fondo del
+ * tema saliente, aplica el tema nuevo por debajo y desvanece la capa. Así no
+ * se anima la tipografía (que al terminar se re-renderiza y parpadea).
+ * Si el usuario prefiere menos movimiento, el cambio es instantáneo.
+ *
+ * @param {'dark' | 'light'} theme
+ */
+function switchTheme(theme) {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (prefersReducedMotion) {
+    applyTheme(theme);
+    saveTheme(theme);
+    document.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
+    return;
+  }
+
+  const oldBackground = getComputedStyle(document.documentElement)
+    .getPropertyValue('--color-bg')
+    .trim();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'theme-fade';
+  overlay.style.backgroundColor = oldBackground;
+  document.body.append(overlay);
+
+  // Fuerza un reflow para que la capa ya esté pintada antes de desvanecerse.
+  overlay.getBoundingClientRect();
+
+  applyTheme(theme);
+  saveTheme(theme);
+  document.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
+
+  overlay.classList.add('theme-fade--out');
+  overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+  setTimeout(() => overlay.remove(), 600);
 }
 
 /**
@@ -221,8 +258,8 @@ export function initTheme() {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   const nextThemeName = theme === 'dark' ? 'claro' : 'oscuro';
-  themeButton.textContent = `Tema ${nextThemeName}`;
   themeButton.setAttribute('aria-label', `Cambiar a tema ${nextThemeName}`);
+  themeButton.title = `Cambiar a tema ${nextThemeName}`;
 }
 
 /**
