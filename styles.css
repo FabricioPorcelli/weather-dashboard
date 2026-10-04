@@ -1,8 +1,7 @@
 /* ==========================================================================
-   Weather Dashboard — estilos base
-   Fase 1: mapa a pantalla completa + panel lateral flotante.
-   Los colores viven en variables CSS para reutilizarlos cuando agreguemos
-   el tema claro/oscuro (Fase 5).
+   Weather Dashboard — estilos
+   Mapa a pantalla completa + panel lateral flotante, con temas claro/oscuro
+   a través de variables CSS.
    ========================================================================== */
 
 :root {

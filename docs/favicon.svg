@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Weather Dashboard">
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+  <circle cx="43" cy="24" r="11" fill="#fb923c"/>
+  <g fill="#e2e8f0">
+    <circle cx="24" cy="42" r="10"/>
+    <circle cx="36" cy="35" r="13"/>
+    <circle cx="47" cy="43" r="9"/>
+    <rect x="24" y="42" width="23" height="10" rx="5"/>
+  </g>
+</svg>

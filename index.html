@@ -4,6 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Weather Dashboard</title>
+  <meta
+    name="description"
+    content="Dashboard del clima con mapa interactivo, pronóstico de 5 días y búsqueda por ciudad. JavaScript vanilla, Leaflet y Chart.js."
+  >
+  <meta name="author" content="Fabricio Porcelli">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="docs/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://github.com/FabricioPorcelli/weather-dashboard">
+
+  <!-- Open Graph: cómo se ve el proyecto al compartirlo. Actualizar og:image
+       a una URL absoluta cuando el dashboard esté publicado. -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Weather Dashboard">
+  <meta
+    property="og:description"
+    content="Clima actual y pronóstico de 5 días en un mapa interactivo, con búsqueda por ciudad y tema claro/oscuro."
+  >
+  <meta property="og:url" content="https://github.com/FabricioPorcelli/weather-dashboard">
+  <meta property="og:image" content="docs/screenshot.png">
+  <meta name="twitter:card" content="summary_large_image">
 
   <!-- Leaflet (CDN): hoja de estilos del mapa -->
   <link
@@ -76,7 +96,7 @@
       <button class="search__button" type="submit">Buscar</button>
     </form>
 
-    <p class="panel__hint" id="status">Hacé clic en el mapa o buscá una ciudad.</p>
+    <p class="panel__hint" id="status" aria-live="polite">Hacé clic en el mapa o buscá una ciudad.</p>
     <p class="panel__coords" id="coords"></p>
 
     <!-- Estado de caché de la API en la última consulta (HIT/MISS) -->

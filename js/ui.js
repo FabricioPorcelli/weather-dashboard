@@ -24,6 +24,7 @@ const themeButton = document.querySelector('#theme-toggle');
 const badgesEl = document.querySelector('#cache-badges');
 const cacheCurrentEl = document.querySelector('#cache-current');
 const cacheForecastEl = document.querySelector('#cache-forecast');
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 
 /**
  * Muestra las coordenadas de la ubicación elegida.
@@ -77,7 +78,7 @@ const ERROR_MESSAGES = {
  * @returns {string}
  */
 function messageForError(error) {
-  return ERROR_MESSAGES[error.status] ?? error.message ?? 'Ocurrió un error inesperado.';
+  return ERROR_MESSAGES[error.status] || error.message || 'Ocurrió un error inesperado.';
 }
 
 /**
@@ -251,12 +252,21 @@ function switchTheme(theme) {
 }
 
 /**
- * Escribe el tema en <html> y actualiza el texto del botón.
+ * Escribe el tema en <html>, actualiza el color de la barra del navegador
+ * (theme-color) y los textos accesibles del botón.
  *
  * @param {'dark' | 'light'} theme
  */
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
+
+  if (themeColorMeta) {
+    const background = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-bg')
+      .trim();
+    themeColorMeta.setAttribute('content', background);
+  }
+
   const nextThemeName = theme === 'dark' ? 'claro' : 'oscuro';
   themeButton.setAttribute('aria-label', `Cambiar a tema ${nextThemeName}`);
   themeButton.title = `Cambiar a tema ${nextThemeName}`;
