@@ -1,8 +1,10 @@
 /**
- * Render del panel lateral: tarjeta de clima, estados de carga y error.
+ * Render del panel lateral: tarjeta de clima, estados de carga, error y tema.
  * Todas las actualizaciones usan textContent para insertar los datos como
  * texto plano y evitar inyecciones de HTML.
  */
+
+import { loadTheme, saveTheme } from './storage.js';
 
 const statusEl = document.querySelector('#status');
 const coordsEl = document.querySelector('#coords');
@@ -17,6 +19,7 @@ const precipEl = document.querySelector('#current-precip');
 const updatedEl = document.querySelector('#current-updated');
 const forecastCardEl = document.querySelector('#forecast-card');
 const daysEl = document.querySelector('#forecast-days');
+const themeButton = document.querySelector('#theme-toggle');
 
 /**
  * Muestra las coordenadas de la ubicación elegida.
@@ -139,4 +142,42 @@ function formatDayLong(isoDate) {
     day: 'numeric',
     month: 'short',
   });
+}
+
+/**
+ * Aplica el tema guardado o el preferido por el sistema, y conecta el botón
+ * de cambio. Precedencia: tema guardado > preferencia del sistema > oscuro.
+ * Avisa del cambio con el evento "themechange" para que otros módulos
+ * (por ejemplo el gráfico) se actualicen sin acoplarse a este módulo.
+ */
+export function initTheme() {
+  applyTheme(loadTheme() ?? systemTheme());
+
+  themeButton.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    saveTheme(next);
+    document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: next } }));
+  });
+}
+
+/**
+ * Escribe el tema en <html> y actualiza el texto del botón.
+ *
+ * @param {'dark' | 'light'} theme
+ */
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  const nextThemeName = theme === 'dark' ? 'claro' : 'oscuro';
+  themeButton.textContent = `Tema ${nextThemeName}`;
+  themeButton.setAttribute('aria-label', `Cambiar a tema ${nextThemeName}`);
+}
+
+/**
+ * Devuelve el tema preferido por el sistema operativo.
+ *
+ * @returns {'dark' | 'light'}
+ */
+function systemTheme() {
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }

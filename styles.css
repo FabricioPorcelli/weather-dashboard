@@ -12,9 +12,27 @@
   --color-text: #e2e8f0;
   --color-muted: #94a3b8;
   --color-accent: #38bdf8;
+  --color-on-accent: #0f172a;
   --color-warm: #fb923c;
+  --color-danger: #f87171;
   --panel-width: 340px;
   --radius: 14px;
+  color-scheme: dark;
+}
+
+/* Tema claro: pisa las variables del tema oscuro definido en :root.
+   Va después en el archivo para ganar por orden de aparición. */
+[data-theme='light'] {
+  --color-bg: #f1f5f9;
+  --color-panel: rgba(255, 255, 255, 0.93);
+  --color-border: rgba(15, 23, 42, 0.15);
+  --color-text: #0f172a;
+  --color-muted: #64748b;
+  --color-accent: #0284c7;
+  --color-on-accent: #ffffff;
+  --color-warm: #ea580c;
+  --color-danger: #dc2626;
+  color-scheme: light;
 }
 
 * {
@@ -35,6 +53,12 @@ body {
   inset: 0;
 }
 
+/* Modo oscuro del mapa: invierte los tiles de OpenStreetMap con un filtro.
+   Solo afecta al pane de tiles; el marcador y los controles quedan intactos. */
+.map--dark-tiles .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+
 .panel {
   position: absolute;
   top: 16px;
@@ -53,9 +77,32 @@ body {
   z-index: 1000;
 }
 
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
 .panel__title {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 1.4rem;
+}
+
+.panel__theme {
+  padding: 6px 10px;
+  color: var(--color-text);
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.panel__theme:hover {
+  filter: brightness(1.15);
 }
 
 .panel__hint {
@@ -66,7 +113,7 @@ body {
 }
 
 .panel__hint--error {
-  color: #f87171;
+  color: var(--color-danger);
 }
 
 .panel__coords {
@@ -107,7 +154,7 @@ body {
 
 .search__button {
   padding: 8px 14px;
-  color: #0f172a;
+  color: var(--color-on-accent);
   background: var(--color-accent);
   border: none;
   border-radius: 8px;

@@ -20,7 +20,12 @@
 
   <!-- Panel lateral: resumen de la ubicación elegida -->
   <aside class="panel">
-    <h1 class="panel__title">Weather Dashboard</h1>
+    <header class="panel__header">
+      <h1 class="panel__title">Clima</h1>
+      <button class="panel__theme" id="theme-toggle" type="button" aria-label="Cambiar tema">
+        Tema claro
+      </button>
+    </header>
 
     <!-- Búsqueda por ciudad: se geocodifica con Nominatim y se consulta por nombre -->
     <form class="search" id="search-form" autocomplete="off">

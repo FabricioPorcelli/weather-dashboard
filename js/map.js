@@ -1,9 +1,16 @@
 /**
  * Inicialización y control del mapa Leaflet.
  * Leaflet se carga por CDN en index.html y queda disponible como global `L`.
+ * Se usan tiles de OpenStreetMap para ambos temas; en modo oscuro se aplica
+ * un filtro CSS sobre la capa de tiles (ver styles.css), porque hoy los
+ * proveedores de tiles oscuros requieren API key.
  */
 
 import { COORD_DECIMALS, INITIAL_VIEW } from './config.js';
+
+const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 /** @type {L.Map | null} Instancia del mapa (null hasta llamar a initMap). */
 let map = null;
@@ -16,14 +23,17 @@ let marker = null;
  *
  * @param {(lat: number, lon: number) => void} onLocationSelected
  *   Callback que se ejecuta al hacer clic, con las coordenadas del punto.
+ * @param {'dark' | 'light'} theme Tema inicial de los tiles.
  */
-export function initMap(onLocationSelected) {
+export function initMap(onLocationSelected, theme) {
   map = L.map('map').setView([INITIAL_VIEW.lat, INITIAL_VIEW.lon], INITIAL_VIEW.zoom);
 
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  L.tileLayer(TILE_URL, {
     maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: TILE_ATTRIBUTION,
   }).addTo(map);
+
+  setMapTheme(theme);
 
   map.on('click', (event) => {
     const lat = roundCoord(event.latlng.lat);
@@ -31,6 +41,18 @@ export function initMap(onLocationSelected) {
     placeMarker(lat, lon);
     onLocationSelected(lat, lon);
   });
+}
+
+/**
+ * Ajusta la apariencia del mapa al tema activo.
+ * En oscuro se agrega una clase al contenedor y el filtro CSS definido en
+ * styles.css invierte los tiles; el marcador y los controles no se afectan
+ * porque viven en otros panes de Leaflet.
+ *
+ * @param {'dark' | 'light'} theme
+ */
+export function setMapTheme(theme) {
+  map.getContainer().classList.toggle('map--dark-tiles', theme === 'dark');
 }
 
 /**
@@ -69,4 +91,13 @@ export function placeMarker(lat, lon) {
  */
 export function centerOn(lat, lon, zoom) {
   map.setView([lat, lon], zoom ?? Math.max(map.getZoom(), 10));
+}
+
+/**
+ * Devuelve el nivel de zoom actual del mapa.
+ *
+ * @returns {number}
+ */
+export function getZoom() {
+  return map.getZoom();
 }

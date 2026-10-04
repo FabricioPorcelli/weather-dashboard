@@ -7,12 +7,16 @@
 /** @type {Chart | null} Instancia activa; se destruye antes de redibujar. */
 let chart = null;
 
+/** Últimos días renderizados; permiten redibujar el gráfico al cambiar el tema. */
+let lastDays = null;
+
 /**
  * Dibuja el gráfico de temperaturas máximas y mínimas del pronóstico.
  *
  * @param {Array<object>} days Días de la respuesta de /v1/forecast/coords/...
  */
 export function renderForecastChart(days) {
+  lastDays = days;
   const labels = days.map((day) => formatDay(day.date));
   const textColor = cssVar('--color-text');
   const mutedColor = cssVar('--color-muted');
@@ -87,4 +91,14 @@ function formatDay(isoDate) {
  */
 function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/**
+ * Redibuja el gráfico con los colores del tema actual.
+ * No hace nada si todavía no se renderizó ningún pronóstico.
+ */
+export function refreshChartTheme() {
+  if (lastDays) {
+    renderForecastChart(lastDays);
+  }
 }
