@@ -26,8 +26,8 @@ const PARTICLES = new Set([
 /**
  * Normaliza un nombre de lugar: colapsa espacios y capitaliza cada palabra,
  * dejando en minúscula las partículas ("San Nicolás de los Arroyos").
- * Conserva las palabras de hasta 4 letras (siglas como "CABA" o "USA") y las
- * que contienen puntos (abreviaturas como "EE.UU.").
+ * Conserva las siglas de hasta 4 letras en mayúsculas ("CABA", "USA") y las
+ * abreviaturas con punto ("EE.UU.").
  *
  * @param {string} value
  * @returns {string}
@@ -38,7 +38,9 @@ export function formatPlaceName(value) {
     .replace(/\s+/g, ' ')
     .split(' ')
     .map((word, index) => {
-      if (word.includes('.') || word.length <= 4) {
+      const isAcronym =
+        word.includes('.') || (word.length <= 4 && word === word.toLocaleUpperCase('es'));
+      if (isAcronym) {
         return word;
       }
       const lower = word.toLocaleLowerCase('es');

@@ -160,7 +160,16 @@ async function restoreLastLocation() {
   centerOn(saved.lat, saved.lon, saved.zoom);
   placeMarker(saved.lat, saved.lon);
   setSelectedCoords(saved.lat, saved.lon);
-  await loadWeather(getCurrentWeather(saved.lat, saved.lon), getForecast(saved.lat, saved.lon));
+
+  const current = await loadWeather(
+    getCurrentWeather(saved.lat, saved.lon),
+    getForecast(saved.lat, saved.lon),
+  );
+
+  if (current) {
+    // Evita repetir la consulta si el primer clic cae en la misma celda.
+    lastQueryKey = `coords:${saved.lat},${saved.lon}`;
+  }
 }
 
 restoreLastLocation();

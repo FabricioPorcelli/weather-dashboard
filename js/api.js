@@ -43,7 +43,11 @@ async function request(path) {
     throw new ApiError(await readErrorDetail(response), response.status);
   }
 
-  return { data: await response.json(), cache };
+  try {
+    return { data: await response.json(), cache };
+  } catch {
+    throw new ApiError('La respuesta de la API no fue válida.', response.status);
+  }
 }
 
 /**
