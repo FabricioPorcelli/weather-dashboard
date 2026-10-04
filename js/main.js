@@ -19,6 +19,7 @@ import { centerOn, getZoom, initMap, placeMarker, setMapTheme } from './map.js';
 import { loadLastLocation, saveLastLocation } from './storage.js';
 import {
   initTheme,
+  renderCacheBadges,
   renderCurrentWeather,
   renderForecast,
   setSelectedCoords,
@@ -58,12 +59,13 @@ async function loadWeather(currentPromise, forecastPromise) {
     renderCurrentWeather(current.data);
     renderForecast(forecast.data);
     renderForecastChart(forecast.data.days);
+    renderCacheBadges({ current: current.cache, forecast: forecast.cache });
     return current.data;
   } catch (error) {
     if (currentRequest !== requestId) {
       return null;
     }
-    showError(error.message);
+    showError(error);
     return null;
   }
 }

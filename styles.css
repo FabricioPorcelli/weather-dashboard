@@ -15,6 +15,7 @@
   --color-on-accent: #0f172a;
   --color-warm: #fb923c;
   --color-danger: #f87171;
+  --color-hit: #4ade80;
   --panel-width: 340px;
   --radius: 14px;
   color-scheme: dark;
@@ -32,6 +33,7 @@
   --color-on-accent: #ffffff;
   --color-warm: #ea580c;
   --color-danger: #dc2626;
+  --color-hit: #16a34a;
   color-scheme: light;
 }
 
@@ -166,6 +168,33 @@ body {
 
 .search__button:hover {
   filter: brightness(1.1);
+}
+
+/* --- Badges de caché ------------------------------------------------------ */
+
+.cache {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 0;
+}
+
+.cache__badge {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cache__badge--hit {
+  color: var(--color-hit);
+  border-color: currentColor;
+}
+
+.cache__badge--miss {
+  color: var(--color-warm);
+  border-color: currentColor;
 }
 
 /* --- Tarjeta de clima actual --------------------------------------------- */

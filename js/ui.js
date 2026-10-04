@@ -20,6 +20,9 @@ const updatedEl = document.querySelector('#current-updated');
 const forecastCardEl = document.querySelector('#forecast-card');
 const daysEl = document.querySelector('#forecast-days');
 const themeButton = document.querySelector('#theme-toggle');
+const badgesEl = document.querySelector('#cache-badges');
+const cacheCurrentEl = document.querySelector('#cache-current');
+const cacheForecastEl = document.querySelector('#cache-forecast');
 
 /**
  * Muestra las coordenadas de la ubicación elegida.
@@ -39,18 +42,41 @@ export function showLoading() {
   statusEl.textContent = 'Consultando la API…';
   cardEl.hidden = true;
   forecastCardEl.hidden = true;
+  badgesEl.hidden = true;
 }
 
 /**
- * Estado de error: mensaje visible y tarjeta oculta.
+ * Estado de error: mensaje visible y tarjetas ocultas.
+ * Acepta un texto ya armado o un error con `status` (ApiError) y lo traduce
+ * a un mensaje acorde al código HTTP.
  *
- * @param {string} message
+ * @param {string | (Error & { status?: number })} error
  */
-export function showError(message) {
+export function showError(error) {
   statusEl.classList.add('panel__hint--error');
-  statusEl.textContent = message;
+  statusEl.textContent = typeof error === 'string' ? error : messageForError(error);
   cardEl.hidden = true;
   forecastCardEl.hidden = true;
+  badgesEl.hidden = true;
+}
+
+/** Mensajes de la API por código HTTP. El 404 usa el detalle que manda la API. */
+const ERROR_MESSAGES = {
+  0: 'No se pudo conectar con la API. ¿Está corriendo?',
+  422: 'Los datos enviados no son válidos.',
+  429: 'Demasiadas solicitudes. Esperá un minuto y probá de nuevo.',
+  502: 'El proveedor del clima no está disponible. Probá más tarde.',
+  504: 'El proveedor tardó demasiado. Probá de nuevo.',
+};
+
+/**
+ * Traduce un error de la API a un mensaje mostrable.
+ *
+ * @param {Error & { status?: number }} error
+ * @returns {string}
+ */
+function messageForError(error) {
+  return ERROR_MESSAGES[error.status] ?? error.message ?? 'Ocurrió un error inesperado.';
 }
 
 /**
@@ -70,6 +96,31 @@ export function renderCurrentWeather(data) {
   precipEl.textContent = `${data.precipitation_mm.toFixed(1)} mm`;
   updatedEl.textContent = `Actualizado: ${formatDateTime(data.updated_at)}`;
   cardEl.hidden = false;
+}
+
+/**
+ * Actualiza los badges con el estado de caché de cada respuesta.
+ *
+ * @param {{ current: string | null, forecast: string | null }} caches
+ *   Valores del header X-Cache ("HIT" o "MISS") de cada endpoint.
+ */
+export function renderCacheBadges(caches) {
+  setBadge(cacheCurrentEl, 'Actual', caches.current);
+  setBadge(cacheForecastEl, 'Pronóstico', caches.forecast);
+  badgesEl.hidden = false;
+}
+
+/**
+ * Escribe un badge de caché y le asigna el color según HIT o MISS.
+ *
+ * @param {HTMLElement} element
+ * @param {string} label
+ * @param {string | null} value
+ */
+function setBadge(element, label, value) {
+  element.textContent = `${label}: ${value ?? '—'}`;
+  element.classList.toggle('cache__badge--hit', value === 'HIT');
+  element.classList.toggle('cache__badge--miss', value === 'MISS');
 }
 
 /**

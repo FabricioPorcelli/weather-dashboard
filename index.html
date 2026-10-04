@@ -43,6 +43,12 @@
     <p class="panel__hint" id="status">Hacé clic en el mapa o buscá una ciudad.</p>
     <p class="panel__coords" id="coords"></p>
 
+    <!-- Estado de caché de la API en la última consulta (HIT/MISS) -->
+    <div class="cache" id="cache-badges" hidden>
+      <span class="cache__badge" id="cache-current"></span>
+      <span class="cache__badge" id="cache-forecast"></span>
+    </div>
+
     <!-- Tarjeta de clima actual: se muestra cuando la API responde -->
     <section class="card" id="current-card" hidden>
       <h2 class="card__location" id="current-location"></h2>
