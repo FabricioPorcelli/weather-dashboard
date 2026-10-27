@@ -79,3 +79,56 @@ export function loadLastLocation() {
 export function saveLastLocation(location) {
   write(STORAGE_KEYS.lastLocation, location);
 }
+
+/** Cantidad máxima de conversaciones marcadas en el mapa. */
+const MAX_CHAT_ANCHORS = 20;
+
+/**
+ * Devuelve los puntos de conversaciones guardadas.
+ * Descarta entradas incompletas para no romper el mapa.
+ *
+ * @returns {Array<{ session_id: string, lat: number, lon: number, label?: string | null, updated_at?: string }>}
+ */
+export function loadChatAnchors() {
+  const value = read(STORAGE_KEYS.chatAnchors);
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(
+    (anchor) =>
+      typeof anchor?.session_id === 'string' &&
+      typeof anchor?.lat === 'number' &&
+      typeof anchor?.lon === 'number',
+  );
+}
+
+/**
+ * Guarda o actualiza el punto de una conversación.
+ * Se conservan las últimas 20, ordenadas por actualización más reciente.
+ *
+ * @param {{ session_id: string, lat: number, lon: number, label?: string | null, updated_at?: string }} anchor
+ */
+export function saveChatAnchor(anchor) {
+  if (!anchor?.session_id) {
+    return;
+  }
+
+  const anchors = loadChatAnchors();
+  const index = anchors.findIndex(
+    (item) => item.session_id === anchor.session_id,
+  );
+
+  if (index >= 0) {
+    anchors[index] = { ...anchors[index], ...anchor };
+  } else {
+    anchors.push(anchor);
+  }
+
+  anchors.sort(
+    (a, b) =>
+      new Date(b.updated_at ?? 0).getTime() -
+      new Date(a.updated_at ?? 0).getTime(),
+  );
+  write(STORAGE_KEYS.chatAnchors, anchors.slice(0, MAX_CHAT_ANCHORS));
+}

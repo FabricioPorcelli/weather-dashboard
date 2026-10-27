@@ -18,6 +18,9 @@ let map = null;
 /** @type {L.Marker | null} Marcador de la ubicación elegida. */
 let marker = null;
 
+/** @type {L.LayerGroup | null} Capa de conversaciones guardadas. */
+let conversationLayer = null;
+
 /**
  * Crea el mapa en el contenedor #map y registra el evento de clic.
  *
@@ -91,6 +94,123 @@ export function placeMarker(lat, lon) {
  */
 export function centerOn(lat, lon, zoom) {
   map.setView([lat, lon], zoom ?? Math.max(map.getZoom(), 10));
+}
+
+/**
+ * Abre el chat como popup anclado al marcador seleccionado.
+ * Si todavía no hay marcador, devuelve false y no muestra nada.
+ *
+ * @param {HTMLElement} element
+ * @returns {boolean}
+ */
+export function openChatPopup(element) {
+  if (!map || !marker) {
+    return false;
+  }
+
+  const mapRect = map.getContainer().getBoundingClientRect();
+  const panelRect = document.querySelector('.panel')?.getBoundingClientRect();
+  const panelOnRight =
+    panelRect && panelRect.left > mapRect.left + mapRect.width / 2;
+  const availableWidth = panelOnRight
+    ? panelRect.left - mapRect.left - 32
+    : window.innerWidth - 40;
+  const maxWidth = Math.max(240, Math.min(460, availableWidth));
+
+  marker
+    .bindPopup(element, {
+      className: 'chat-popup',
+      maxWidth,
+      minWidth: Math.min(380, maxWidth),
+      autoClose: false,
+      closeOnClick: false,
+      closeButton: true,
+      autoPan: false,
+      offset: [0, -6],
+    })
+    .openPopup();
+
+  // Centra el popup en la pantalla para que no quede cortado por arriba.
+  requestAnimationFrame(centerChatPopup);
+
+  return true;
+}
+
+/**
+ * Ajusta el mapa hasta que el popup del chat quede centrado verticalmente.
+ * Se corrige en pasos cortos porque el alto del popup depende del contenido.
+ */
+function centerChatPopup() {
+  if (!map || !marker) {
+    return;
+  }
+
+  let attempts = 0;
+
+  const centerOnce = () => {
+    const popupElement = marker.getPopup()?.getElement();
+    if (!popupElement || attempts >= 4) {
+      return;
+    }
+
+    const mapRect = map.getContainer().getBoundingClientRect();
+    const panelRect = document.querySelector('.panel')?.getBoundingClientRect();
+    const panelOnRight =
+      panelRect && panelRect.left > mapRect.left + mapRect.width / 2;
+    const visibleRight = panelOnRight ? panelRect.left - 8 : mapRect.right;
+    const visibleCenterX = (mapRect.left + visibleRight) / 2;
+    const mapCenterY = mapRect.top + mapRect.height / 2;
+    const popupRect = popupElement.getBoundingClientRect();
+    const popupCenterX = popupRect.left + popupRect.width / 2;
+    const popupCenterY = popupRect.top + popupRect.height / 2;
+    const deltaX = popupCenterX - visibleCenterX;
+    const deltaY = popupCenterY - mapCenterY;
+
+    if (Math.abs(deltaX) < 4 && Math.abs(deltaY) < 4) {
+      return;
+    }
+
+    attempts += 1;
+    map.once('moveend', centerOnce);
+    map.panBy([deltaX, deltaY], { animate: true, duration: 0.25 });
+  };
+
+  centerOnce();
+}
+
+/**
+ * Dibuja los puntos de conversaciones guardadas con un pulso.
+ *
+ * @param {Array<{ session_id: string, lat: number, lon: number, label?: string | null }>} anchors
+ * @param {(anchor: object) => void} onSelect
+ */
+export function renderConversationAnchors(anchors, onSelect) {
+  if (!map) {
+    return;
+  }
+
+  if (!conversationLayer) {
+    conversationLayer = L.layerGroup().addTo(map);
+  }
+  conversationLayer.clearLayers();
+
+  for (const anchor of anchors) {
+    const icon = L.divIcon({
+      className: 'chat-anchor',
+      html: '<span class="chat-anchor__dot"></span>',
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    });
+
+    const anchorMarker = L.marker([anchor.lat, anchor.lon], {
+      icon,
+      bubblingMouseEvents: false,
+      title: anchor.label ?? 'Conversación guardada',
+      zIndexOffset: 1000,
+    }).addTo(conversationLayer);
+
+    anchorMarker.on('click', () => onSelect(anchor));
+  }
 }
 
 /**

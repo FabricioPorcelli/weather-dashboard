@@ -99,6 +99,11 @@
     <p class="panel__hint" id="status" aria-live="polite">Hacé clic en el mapa o buscá una ciudad.</p>
     <p class="panel__coords" id="coords"></p>
 
+    <!-- Abre el chat como ventana emergente sobre el marcador del mapa. -->
+    <button class="chat-open" id="chat-open" type="button" hidden>
+      Preguntar sobre este lugar
+    </button>
+
     <!-- Estado de caché de la API en la última consulta (HIT/MISS) -->
     <div class="cache" id="cache-badges" hidden>
       <span class="cache__badge" id="cache-current"></span>
@@ -145,7 +150,38 @@
       </div>
       <ul class="days" id="forecast-days"></ul>
     </section>
+
   </aside>
+
+  <!-- Chat emergente: se inserta en un popup de Leaflet junto al marcador. -->
+  <section class="chat-panel" id="chat-panel" hidden aria-label="Preguntas sobre el clima">
+    <div class="chat__header">
+      <h2 class="chat__title">Pregunta sobre el clima</h2>
+    </div>
+    <p class="chat__location" id="chat-location">Sin ubicación seleccionada.</p>
+
+    <div
+      class="chat__messages"
+      id="chat-messages"
+      role="log"
+      aria-live="polite"
+      aria-label="Conversación con el asistente"
+    ></div>
+
+    <p class="chat__status" id="chat-status" hidden></p>
+
+    <form class="chat__form" id="chat-form" autocomplete="off">
+      <input
+        class="chat__input"
+        id="chat-input"
+        type="text"
+        maxlength="500"
+        placeholder="Preguntá sobre el clima…"
+        aria-label="Mensaje para el asistente"
+      >
+      <button class="chat__send" id="chat-send" type="submit">Enviar</button>
+    </form>
+  </section>
 
   <!-- Leaflet y Chart.js (CDN): deben cargarse antes que los módulos que usan
        los globales `L` y `Chart` -->

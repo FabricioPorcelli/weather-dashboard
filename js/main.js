@@ -13,10 +13,28 @@ import {
   getForecastByCity,
 } from './api.js';
 import { refreshChartTheme, renderForecastChart } from './chart.js';
+import {
+  initChat,
+  openChatWindow,
+  resumeConversation,
+  setChatLocation,
+} from './chat.js';
 import { CITY_ZOOM } from './config.js';
 import { geocodeCity } from './geocode.js';
-import { centerOn, getZoom, initMap, placeMarker, setMapTheme } from './map.js';
-import { loadLastLocation, saveLastLocation } from './storage.js';
+import {
+  centerOn,
+  getZoom,
+  initMap,
+  openChatPopup,
+  placeMarker,
+  renderConversationAnchors,
+  setMapTheme,
+} from './map.js';
+import {
+  loadChatAnchors,
+  loadLastLocation,
+  saveLastLocation,
+} from './storage.js';
 import { formatPlaceName } from './text.js';
 import {
   initTheme,
@@ -33,6 +51,9 @@ const searchInput = document.querySelector('#search-input');
 
 /** Número de la última petición; permite descartar respuestas que llegan tarde. */
 let requestId = 0;
+
+/** Ubicación activa del dashboard; se comparte con el chat opcional. */
+let currentLocation = null;
 
 /**
  * Clave de la última consulta (coordenadas o ciudad) ya mostrada o en curso,
@@ -71,7 +92,66 @@ async function loadWeather(currentPromise, forecastPromise) {
   }
 }
 
+/**
+ * Vuelve a dibujar los puntos de conversaciones guardadas.
+ */
+function refreshChatAnchors() {
+  renderConversationAnchors(loadChatAnchors(), resumeFromAnchor);
+}
+
+/**
+ * Retoma una conversación desde un punto guardado en el mapa.
+ *
+ * @param {{ session_id: string, lat: number, lon: number, label?: string | null }} anchor
+ */
+async function resumeFromAnchor(anchor) {
+  const location = {
+    lat: anchor.lat,
+    lon: anchor.lon,
+    label: anchor.label ?? null,
+  };
+  const queryKey = `coords:${anchor.lat},${anchor.lon}`;
+
+  centerOn(anchor.lat, anchor.lon, getZoom());
+  placeMarker(anchor.lat, anchor.lon);
+  setSelectedCoords(anchor.lat, anchor.lon);
+  lastQueryKey = queryKey;
+
+  resumeConversation(anchor);
+  setChatLocation(location);
+  openChatWindow();
+
+  const current = await loadWeather(
+    getCurrentWeather(anchor.lat, anchor.lon),
+    getForecast(anchor.lat, anchor.lon),
+  );
+
+  if (!current) {
+    if (lastQueryKey === queryKey) {
+      lastQueryKey = null;
+    }
+    return;
+  }
+
+  currentLocation = {
+    lat: anchor.lat,
+    lon: anchor.lon,
+    label: current.location,
+  };
+  setChatLocation(currentLocation);
+  saveLastLocation({
+    lat: anchor.lat,
+    lon: anchor.lon,
+    label: current.location,
+    zoom: getZoom(),
+  });
+}
+
 initTheme();
+initChat({
+  openPopup: openChatPopup,
+  onAnchorsChanged: refreshChatAnchors,
+});
 const initialTheme = document.documentElement.dataset.theme;
 
 document.addEventListener('themechange', (event) => {
@@ -87,6 +167,9 @@ initMap(async (lat, lon) => {
   lastQueryKey = queryKey;
 
   setSelectedCoords(lat, lon);
+  currentLocation = { lat, lon, label: null };
+  setChatLocation(currentLocation);
+
   const current = await loadWeather(getCurrentWeather(lat, lon), getForecast(lat, lon));
 
   if (!current) {
@@ -96,8 +179,12 @@ initMap(async (lat, lon) => {
     return;
   }
 
+  currentLocation = { lat, lon, label: current.location };
+  setChatLocation(currentLocation);
   saveLastLocation({ lat, lon, label: current.location, zoom: getZoom() });
 }, initialTheme);
+
+refreshChatAnchors();
 
 searchForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -130,6 +217,8 @@ searchForm.addEventListener('submit', async (event) => {
     centerOn(place.lat, place.lon, CITY_ZOOM);
     placeMarker(place.lat, place.lon);
     setSelectedCoords(place.lat, place.lon);
+    currentLocation = { lat: place.lat, lon: place.lon, label: city };
+    setChatLocation(currentLocation);
 
     const current = await loadWeather(getCurrentWeatherByCity(city), getForecastByCity(city));
     if (!current) {
@@ -139,6 +228,8 @@ searchForm.addEventListener('submit', async (event) => {
       return;
     }
 
+    currentLocation = { lat: place.lat, lon: place.lon, label: current.location };
+    setChatLocation(currentLocation);
     saveLastLocation({ lat: place.lat, lon: place.lon, label: current.location, zoom: CITY_ZOOM });
   } catch (error) {
     if (lastQueryKey === queryKey) {
@@ -160,6 +251,8 @@ async function restoreLastLocation() {
   centerOn(saved.lat, saved.lon, saved.zoom);
   placeMarker(saved.lat, saved.lon);
   setSelectedCoords(saved.lat, saved.lon);
+  currentLocation = { lat: saved.lat, lon: saved.lon, label: saved.label ?? null };
+  setChatLocation(currentLocation);
 
   const current = await loadWeather(
     getCurrentWeather(saved.lat, saved.lon),
@@ -167,6 +260,8 @@ async function restoreLastLocation() {
   );
 
   if (current) {
+    currentLocation = { lat: saved.lat, lon: saved.lon, label: current.location };
+    setChatLocation(currentLocation);
     // Evita repetir la consulta si el primer clic cae en la misma celda.
     lastQueryKey = `coords:${saved.lat},${saved.lon}`;
   }

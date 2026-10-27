@@ -7,6 +7,12 @@
 /** URL base de la Weather API (ver README del repo weather-api). */
 export const API_BASE_URL = 'http://localhost:8000';
 
+/**
+ * URL base del asistente conversacional.
+ * Es opcional: si no está corriendo, el dashboard sigue funcionando sin él.
+ */
+export const ASSISTANT_BASE_URL = 'http://localhost:8100';
+
 /** Días de pronóstico solicitados a la API (rango permitido: 1 a 15). */
 export const FORECAST_DAYS = 5;
 
@@ -19,6 +25,13 @@ export const COORD_DECIMALS = 2;
 
 /** Zoom al que se centra una ciudad buscada por nombre. */
 export const CITY_ZOOM = 13;
+
+/**
+ * Distancia máxima para seguir la misma conversación al mover el mapa.
+ * Dentro de este radio los datos climáticos son prácticamente iguales;
+ * fuera, el chat empieza una conversación nueva.
+ */
+export const CHAT_LOCATION_RADIUS_KM = 5;
 
 /** Vista inicial del mapa: Buenos Aires. */
 export const INITIAL_VIEW = {
@@ -34,4 +47,5 @@ export const INITIAL_VIEW = {
 export const STORAGE_KEYS = {
   theme: 'weather-dashboard:theme',
   lastLocation: 'weather-dashboard:last-location',
+  chatAnchors: 'weather-dashboard:chat-anchors',
 };
