@@ -17,6 +17,10 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 - Restauración de la última ubicación y el zoom al abrir.
 - Badges de `X-Cache` (HIT/MISS) para ver la caché de la API en acción.
 - Estados de carga y errores claros: 404, 422, 429, 502, 504 y API caída.
+- **Asistente conversacional opcional** en una ventana emergente anclada al punto
+  del mapa, con streaming SSE y respuestas en lenguaje natural. Muestra el nivel
+  de confianza al final y guarda puntos en el mapa para retomar conversaciones.
+  Si el asistente no está corriendo, el dashboard sigue funcionando normalmente.
 
 ## Tecnologías
 
@@ -24,6 +28,7 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 - [Leaflet 1.9.4](https://leafletjs.com/) (mapa) y [Chart.js 4.4.7](https://www.chartjs.org/) (gráfico), por CDN.
 - [Nominatim](https://nominatim.org/) (OpenStreetMap) para convertir nombres de ciudades en coordenadas.
 - [Weather API](https://github.com/FabricioPorcelli/weather-api) (FastAPI + Redis) como fuente de datos, corriendo en `localhost:8000`.
+- [Weather Assistant](https://github.com/FabricioPorcelli/weather-assistant) (FastAPI + PostgreSQL + LLM) como asistente opcional, corriendo en `localhost:8100`.
 
 ## Decisiones técnicas
 
@@ -36,12 +41,29 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
   la API a mensajes claros, y descarta respuestas viejas con un `requestId`.
 - **APIs públicas con respeto**: Nominatim se consulta solo con acción explícita
   del usuario, con caché en memoria y espera de 1 req/s según su política.
-- **Separación por módulos**: `api`, `geocode`, `map`, `chart`, `ui`, `storage`
-  y `main` con una única dirección de dependencias; la UI no conoce detalles de HTTP.
+- **Separación por módulos**: `api`, `geocode`, `map`, `chart`, `ui`, `storage`,
+  `chat` y `main` con una única dirección de dependencias; la UI no conoce
+  detalles de HTTP.
+- **Asistente opcional**: el chat se abre desde “Preguntar sobre este lugar” en
+  un popup de Leaflet anclado al marcador. Al abrirlo, el mapa se desplaza para
+  centrar el popup en el área visible (sin el panel lateral) y que no quede
+  cortado por arriba. Sus errores quedan contenidos ahí; el clima sigue
+  funcionando aunque el asistente esté apagado o sin LLM configurado.
+- **SSE con fetch + ReadableStream**: `EventSource` solo permite GET, así que el
+  chat usa `fetch` por POST y lee el stream manualmente.
+- **Solo lenguaje natural**: no se muestran tarjetas con argumentos internos de
+  las herramientas. Al final se indica la confianza (alta, media o baja).
+- **Conversaciones por zona**: si el nuevo punto está a más de 5 km del inicio de
+  la conversación, el chat empieza de cero. Los puntos usados quedan marcados en
+  el mapa con un pulso para retomar la sesión.
+- **Negritas seguras**: el texto se renderiza con nodos del DOM; `**texto**` se
+  convierte en negrita sin inyectar HTML del servidor.
 
 ## Requisitos
 
 - La Weather API corriendo en `http://localhost:8000` (Docker + Redis).
+- Opcional: el Weather Assistant en `http://localhost:8100`, con PostgreSQL,
+  Redis y un LLM configurado.
 - Un servidor estático en el puerto 5500:
   - VS Code con la extensión [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer), o
   - Python: `python3 -m http.server 5500`.
@@ -93,6 +115,34 @@ python3 -m http.server 5500
 
 Si usás otro puerto, actualizá `CORS_ORIGINS` en el `.env` de la API.
 
+### 3. Asistente opcional
+
+El dashboard funciona sin el asistente. Para habilitar el chat, en el repo
+`weather-assistant`:
+
+```bash
+cd ../weather-assistant
+cp .env.example .env   # completar LLM_API_KEY
+docker compose up --build
+```
+
+El compose del assistant levanta también `weather-api` y PostgreSQL. Si ya
+tenés `weather-api` corriendo por separado, detenelo antes para evitar choques
+en el puerto `8000`.
+
+Verificación:
+
+```bash
+curl http://localhost:8100/v1/health
+```
+
+CORS ya está preparado en `.env.example` con
+`ASSISTANT_CORS_ORIGINS=http://localhost:5500,http://127.0.0.1:5500`. Si servís
+el dashboard desde otro puerto, actualizá esa variable y recreá el contenedor.
+
+Si el asistente no está corriendo, el panel muestra un error al enviar un
+mensaje, pero el clima, el pronóstico y el gráfico siguen funcionando.
+
 ## Configuración
 
 Todo lo ajustable está en `js/config.js`:
@@ -100,11 +150,13 @@ Todo lo ajustable está en `js/config.js`:
 | Constante | Descripción | Valor por defecto |
 |---|---|---|
 | `API_BASE_URL` | URL base de la Weather API | `http://localhost:8000` |
+| `ASSISTANT_BASE_URL` | URL base del asistente opcional | `http://localhost:8100` |
 | `FORECAST_DAYS` | Días de pronóstico (1 a 15) | `5` |
 | `COORD_DECIMALS` | Decimales de las coordenadas enviadas | `2` (~1 km, igual que la API) |
 | `CITY_ZOOM` | Zoom al centrar una ciudad buscada | `13` |
+| `CHAT_LOCATION_RADIUS_KM` | Distancia para mantener la misma conversación | `5` km |
 | `INITIAL_VIEW` | Vista inicial del mapa | Buenos Aires, zoom 12 |
-| `STORAGE_KEYS` | Claves de `localStorage` | tema y última ubicación |
+| `STORAGE_KEYS` | Claves de `localStorage` | tema, última ubicación y anclas del chat |
 
 ## Estructura
 
@@ -124,6 +176,7 @@ weather-dashboard/
 │   ├── map.js      # Leaflet: mapa, marcador, recentrado y tema de los tiles
 │   ├── chart.js    # gráfico de máximas/mínimas con Chart.js
 │   ├── ui.js       # render del panel, estados, badges y tema
+│   ├── chat.js     # asistente opcional: SSE, texto, confianza y anclas
 │   └── main.js     # punto de entrada: conecta eventos y módulos
 └── README.md
 ```
@@ -136,6 +189,7 @@ weather-dashboard/
 | `GET /v1/forecast/coords/{lat}/{lon}?days=5` | Pronóstico por clic en el mapa |
 | `GET /v1/weather/{city}` | Clima actual por ciudad |
 | `GET /v1/forecast/{city}?days=5` | Pronóstico por ciudad |
+| `POST /v1/chat` | Asistente opcional con SSE (weather-assistant) |
 
 Todas las respuestas incluyen el header `X-Cache` (`HIT`/`MISS`), que el
 dashboard muestra en pantalla.
@@ -151,6 +205,16 @@ dashboard muestra en pantalla.
   escribe), respetando el límite de 1 request/segundo y con caché en memoria.
 - **`localStorage`**: `weather-dashboard:theme` y
   `weather-dashboard:last-location`. Borralas para volver al estado inicial.
+- **Asistente opcional**: el chat usa `POST /v1/chat` y eventos SSE (`session`,
+  `tool_call`, `advice`, `token`, `done`, `error`). Se abre en un popup sobre el
+  marcador, sin preguntas rápidas, y con el título “Pregunta sobre el clima”.
+  Muestra solo el texto natural y una línea de confianza. La sesión vive en
+  memoria mientras la página está abierta. Si el asistente no responde, solo se
+  muestra un error dentro del popup.
+- **Conversaciones guardadas**: los puntos usados se guardan en `localStorage`
+  (máximo 20 conversaciones y 40 mensajes por conversación) y se muestran como
+  puntos intermitentes. Al tocarlos, o al volver al mismo punto del mapa, se
+  restauran los mensajes y la sesión.
 
 ## Despliegue
 
@@ -160,6 +224,8 @@ Vercel. Para que funcione en un dominio público:
 1. Hostear la Weather API (Render, Railway, Fly.io, etc.).
 2. Setear `CORS_ORIGINS` en la API con el dominio real del dashboard.
 3. Apuntar `API_BASE_URL` en `js/config.js` al dominio de la API.
+4. Opcional: hostear el assistant, apuntar `ASSISTANT_BASE_URL` y agregar el
+   dominio a `ASSISTANT_CORS_ORIGINS`.
 
 La `WEATHER_API_KEY` vive únicamente en el backend de la API: al ser un
 frontend estático, todo lo que llega al navegador es visible, así que ninguna
