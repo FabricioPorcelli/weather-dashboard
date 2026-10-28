@@ -489,6 +489,50 @@ body {
   font-size: 0.72rem;
 }
 
+.chat__feedback {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.chat__feedback-label {
+  width: 100%;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+.chat__feedback-button {
+  padding: 4px 8px;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.72rem;
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chat__feedback-button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.chat__feedback-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.chat__feedback-done {
+  margin: 0;
+  color: var(--color-hit);
+  font-size: 0.72rem;
+}
+
+.chat__feedback-error {
+  color: var(--color-danger);
+  font-size: 0.72rem;
+}
+
 /* Puntos de conversaciones guardadas en el mapa. */
 .chat-anchor {
   background: transparent;

@@ -84,6 +84,22 @@ export function saveLastLocation(location) {
 const MAX_CHAT_ANCHORS = 20;
 
 /**
+ * Devuelve el identificador anónimo del navegador o lo crea.
+ *
+ * @returns {string}
+ */
+export function loadUserId() {
+  const stored = read(STORAGE_KEYS.userId);
+  if (typeof stored === 'string' && stored) {
+    return stored;
+  }
+
+  const userId = crypto.randomUUID();
+  write(STORAGE_KEYS.userId, userId);
+  return userId;
+}
+
+/**
  * Devuelve los puntos de conversaciones guardadas.
  * Descarta entradas incompletas para no romper el mapa.
  *

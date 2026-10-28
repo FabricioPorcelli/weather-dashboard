@@ -21,6 +21,8 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
   del mapa, con streaming SSE y respuestas en lenguaje natural. Muestra el nivel
   de confianza al final y guarda puntos en el mapa para retomar conversaciones.
   Si el asistente no está corriendo, el dashboard sigue funcionando normalmente.
+- Feedback de comodidad después de un consejo de ropa. El navegador usa un UUID
+  anónimo y lo guarda en `localStorage`.
 
 ## Tecnologías
 
@@ -156,7 +158,7 @@ Todo lo ajustable está en `js/config.js`:
 | `CITY_ZOOM` | Zoom al centrar una ciudad buscada | `13` |
 | `CHAT_LOCATION_RADIUS_KM` | Distancia para mantener la misma conversación | `5` km |
 | `INITIAL_VIEW` | Vista inicial del mapa | Buenos Aires, zoom 12 |
-| `STORAGE_KEYS` | Claves de `localStorage` | tema, última ubicación y anclas del chat |
+| `STORAGE_KEYS` | Claves de `localStorage` | tema, última ubicación, anclas del chat y UUID anónimo |
 
 ## Estructura
 
@@ -169,14 +171,14 @@ weather-dashboard/
 │   └── screenshot.png  # captura usada en este README
 ├── js/
 │   ├── config.js   # constantes compartidas
-│   ├── storage.js  # persistencia en localStorage (tema y última ubicación)
+│   ├── storage.js  # localStorage: tema, ubicación, anclas y UUID anónimo
 │   ├── api.js      # fetch a la Weather API, errores tipados y X-Cache
 │   ├── text.js     # normalización de nombres de lugares
 │   ├── geocode.js  # búsqueda de ciudades en Nominatim
 │   ├── map.js      # Leaflet: mapa, marcador, recentrado y tema de los tiles
 │   ├── chart.js    # gráfico de máximas/mínimas con Chart.js
 │   ├── ui.js       # render del panel, estados, badges y tema
-│   ├── chat.js     # asistente opcional: SSE, texto, confianza y anclas
+│   ├── chat.js     # asistente opcional: SSE, texto, confianza y feedback
 │   └── main.js     # punto de entrada: conecta eventos y módulos
 └── README.md
 ```
@@ -190,6 +192,7 @@ weather-dashboard/
 | `GET /v1/weather/{city}` | Clima actual por ciudad |
 | `GET /v1/forecast/{city}?days=5` | Pronóstico por ciudad |
 | `POST /v1/chat` | Asistente opcional con SSE (weather-assistant) |
+| `POST /v1/feedback` | Feedback de comodidad para el consejo de ropa |
 
 Todas las respuestas incluyen el header `X-Cache` (`HIT`/`MISS`), que el
 dashboard muestra en pantalla.
@@ -203,8 +206,9 @@ dashboard muestra en pantalla.
   el punto no cambió respecto de la última consulta, no se repite el request.
 - **Nominatim**: se consulta solo al presionar Enter/botón (nunca mientras se
   escribe), respetando el límite de 1 request/segundo y con caché en memoria.
-- **`localStorage`**: `weather-dashboard:theme` y
-  `weather-dashboard:last-location`. Borralas para volver al estado inicial.
+- **`localStorage`**: `weather-dashboard:theme`, `weather-dashboard:last-location`,
+  `weather-dashboard:chat-anchors` y `weather-dashboard:user-id`. Borralas para
+  volver al estado inicial.
 - **Asistente opcional**: el chat usa `POST /v1/chat` y eventos SSE (`session`,
   `tool_call`, `advice`, `token`, `done`, `error`). Se abre en un popup sobre el
   marcador, sin preguntas rápidas, y con el título “Pregunta sobre el clima”.
@@ -215,6 +219,9 @@ dashboard muestra en pantalla.
   (máximo 20 conversaciones y 40 mensajes por conversación) y se muestran como
   puntos intermitentes. Al tocarlos, o al volver al mismo punto del mapa, se
   restauran los mensajes y la sesión.
+- **Feedback de ropa**: después de un consejo de ropa se muestran “Tuve frío”,
+  “Estuve justo” y “Tuve calor”. El dashboard envía el UUID anónimo y el tipo de
+  feedback a `POST /v1/feedback`.
 
 ## Despliegue
 

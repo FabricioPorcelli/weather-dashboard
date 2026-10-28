@@ -48,4 +48,5 @@ export const STORAGE_KEYS = {
   theme: 'weather-dashboard:theme',
   lastLocation: 'weather-dashboard:last-location',
   chatAnchors: 'weather-dashboard:chat-anchors',
+  userId: 'weather-dashboard:user-id',
 };

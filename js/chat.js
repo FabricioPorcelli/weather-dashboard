@@ -10,7 +10,11 @@ import {
   ASSISTANT_BASE_URL,
   CHAT_LOCATION_RADIUS_KM,
 } from './config.js';
-import { loadChatAnchors, saveChatAnchor } from './storage.js';
+import {
+  loadChatAnchors,
+  loadUserId,
+  saveChatAnchor,
+} from './storage.js';
 
 const TOOL_LABELS = {
   get_current_weather: 'Consultando el clima actual…',
@@ -49,6 +53,9 @@ let conversationLocation = null;
 /** @type {string | null} Sesión devuelta por el backend. */
 let sessionId = null;
 
+/** @type {string | null} Identificador anónimo del navegador. */
+let userId = null;
+
 /** @type {Array<{ role: 'user' | 'assistant', text: string, confidence?: string }>} */
 let conversationMessages = [];
 
@@ -81,6 +88,7 @@ export function initChat({
 } = {}) {
   openPopup = openPopupCallback ?? null;
   onAnchorsChanged = anchorsChangedCallback ?? null;
+  userId = loadUserId();
   elements = {
     panel: document.querySelector('#chat-panel'),
     open: document.querySelector('#chat-open'),
@@ -247,6 +255,7 @@ async function sendMessage(text) {
   let rawText = '';
   let hasContent = false;
   let confidence = null;
+  let adviceKind = null;
   let completed = false;
   let succeeded = false;
 
@@ -262,6 +271,7 @@ async function sendMessage(text) {
           ...(currentLocation.label ? { label: currentLocation.label } : {}),
         },
         ...(sessionId ? { session_id: sessionId } : {}),
+        ...(userId ? { user_id: userId } : {}),
       },
       controller.signal,
     );
@@ -310,6 +320,9 @@ async function sendMessage(text) {
           addConfidence: (value) => {
             confidence = mergeConfidence(confidence, value);
           },
+          setAdviceKind: (value) => {
+            adviceKind = value;
+          },
           saveAnchor: rememberAnchor,
         });
 
@@ -348,6 +361,9 @@ async function sendMessage(text) {
       }
       if (confidence) {
         appendConfidence(assistant, confidence);
+      }
+      if (adviceKind === 'clothing') {
+        appendFeedbackControls(assistant);
       }
     }
   } catch (error) {
@@ -422,6 +438,7 @@ function handleEvent(event, data, state) {
 
   if (event === 'advice') {
     state.addConfidence(confidenceFromAdvice(data));
+    state.setAdviceKind(data.kind);
     return null;
   }
 
@@ -643,6 +660,86 @@ function appendConfidence(assistant, confidence) {
   line.textContent = `Confianza: ${label}`;
   assistant.message.append(line);
   scrollMessages();
+}
+
+/**
+ * Agrega los botones de feedback después de un consejo de ropa.
+ *
+ * @param {{ message: HTMLElement }} assistant
+ */
+function appendFeedbackControls(assistant) {
+  if (!userId) {
+    return;
+  }
+
+  const container = document.createElement('div');
+  container.className = 'chat__feedback';
+
+  const label = document.createElement('span');
+  label.className = 'chat__feedback-label';
+  label.textContent = '¿Cómo te sentiste con esta recomendación?';
+
+  const options = [
+    ['cold', 'Tuve frío'],
+    ['just_right', 'Estuve justo'],
+    ['hot', 'Tuve calor'],
+  ];
+
+  const buttons = options.map(([value, text]) => {
+    const button = document.createElement('button');
+    button.className = 'chat__feedback-button';
+    button.type = 'button';
+    button.textContent = text;
+    button.addEventListener('click', () => {
+      sendFeedback(value, container, buttons);
+    });
+    return button;
+  });
+
+  container.append(label, ...buttons);
+  assistant.message.append(container);
+  scrollMessages();
+}
+
+/**
+ * Envía el feedback de comodidad al backend.
+ *
+ * @param {string} feedback
+ * @param {HTMLElement} container
+ * @param {HTMLButtonElement[]} buttons
+ */
+async function sendFeedback(feedback, container, buttons) {
+  for (const button of buttons) {
+    button.disabled = true;
+  }
+
+  try {
+    const response = await fetch(`${ASSISTANT_BASE_URL}/v1/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: userId,
+        feedback,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('feedback');
+    }
+
+    const saved = document.createElement('p');
+    saved.className = 'chat__feedback-done';
+    saved.textContent = 'Preferencia guardada.';
+    container.replaceChildren(saved);
+  } catch {
+    for (const button of buttons) {
+      button.disabled = false;
+    }
+    const error = document.createElement('span');
+    error.className = 'chat__feedback-error';
+    error.textContent = 'No se pudo guardar el feedback.';
+    container.append(error);
+  }
 }
 
 /**
