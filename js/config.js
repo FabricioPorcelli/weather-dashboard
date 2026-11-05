@@ -4,14 +4,21 @@
  * cambiar según el entorno.
  */
 
+/**
+ * Detecta si el dashboard se sirve en local mirando el hostname.
+ * Se usa el hostname porque el mismo archivo se despliega tanto en local como
+ * en producción, y las URLs de los servicios cambian según el entorno.
+ */
+const IS_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
 /** URL base de la Weather API (ver README del repo weather-api). */
-export const API_BASE_URL = 'http://localhost:8000';
+export const API_BASE_URL = IS_LOCAL ? 'http://localhost:8000' : '/api';
 
 /**
  * URL base del asistente conversacional.
  * Es opcional: si no está corriendo, el dashboard sigue funcionando sin él.
  */
-export const ASSISTANT_BASE_URL = 'http://localhost:8100';
+export const ASSISTANT_BASE_URL = IS_LOCAL ? 'http://localhost:8100' : '/assistant';
 
 /** Días de pronóstico solicitados a la API (rango permitido: 1 a 15). */
 export const FORECAST_DAYS = 5;
