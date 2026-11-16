@@ -25,6 +25,9 @@ let marker = null;
 /** @type {L.LayerGroup | null} Capa de conversaciones guardadas. */
 let conversationLayer = null;
 
+/** @type {(() => void) | null} Limpieza pendiente del popup del chat. */
+let chatPopupCloseHandler = null;
+
 /**
  * Crea el mapa en el contenedor #map y registra el evento de clic.
  *
@@ -118,9 +121,10 @@ export function centerOn(lat, lon, zoom) {
  * Si todavía no hay marcador, devuelve false y no muestra nada.
  *
  * @param {HTMLElement} element
+ * @param {(() => void) | null} [onClose] Se ejecuta al cerrar desde Leaflet.
  * @returns {boolean}
  */
-export function openChatPopup(element) {
+export function openChatPopup(element, onClose = null) {
   if (!map || !marker) {
     return false;
   }
@@ -134,18 +138,38 @@ export function openChatPopup(element) {
     : window.innerWidth - 40;
   const maxWidth = Math.max(240, Math.min(460, availableWidth));
 
-  marker
-    .bindPopup(element, {
-      className: 'chat-popup',
-      maxWidth,
-      minWidth: Math.min(380, maxWidth),
-      autoClose: false,
-      closeOnClick: false,
-      closeButton: true,
-      autoPan: false,
-      offset: [0, -6],
-    })
-    .openPopup();
+  if (chatPopupCloseHandler) {
+    marker.off('popupclose', chatPopupCloseHandler);
+    chatPopupCloseHandler = null;
+  }
+
+  const popup = marker.bindPopup(element, {
+    className: 'chat-popup',
+    maxWidth,
+    minWidth: Math.min(380, maxWidth),
+    autoClose: false,
+    closeOnClick: false,
+    closeButton: true,
+    autoPan: false,
+    offset: [0, -6],
+  });
+
+  chatPopupCloseHandler = () => {
+    onClose?.();
+
+    // Si la animación de cierre se interrumpe, el contenedor puede quedar
+    // vacío sobre el mapa. Se elimina recién cuando el popup ya no está abierto.
+    window.setTimeout(() => {
+      if (popup.isOpen()) {
+        return;
+      }
+      const container = popup.getElement();
+      container?.parentElement?.removeChild(container);
+    }, 250);
+  };
+
+  marker.once('popupclose', chatPopupCloseHandler);
+  popup.openPopup();
 
   // Centra el popup en la pantalla para que no quede cortado por arriba.
   requestAnimationFrame(centerChatPopup);
@@ -158,9 +182,24 @@ export function openChatPopup(element) {
  * Se usa cuando el chat pasa al modo móvil a pantalla completa.
  */
 export function closeChatPopup() {
-  if (marker?.getPopup()?.isOpen()) {
+  if (!marker) {
+    return;
+  }
+
+  if (chatPopupCloseHandler) {
+    marker.off('popupclose', chatPopupCloseHandler);
+    chatPopupCloseHandler = null;
+  }
+
+  if (marker.getPopup()?.isOpen()) {
     marker.closePopup();
   }
+  marker.unbindPopup();
+
+  // Limpieza defensiva por si quedó un contenedor a medio cerrar.
+  document.querySelectorAll('.leaflet-popup.chat-popup').forEach((node) => {
+    node.remove();
+  });
 }
 
 /**

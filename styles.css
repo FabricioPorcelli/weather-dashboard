@@ -47,6 +47,17 @@
   box-sizing: border-box;
 }
 
+/* La selección invierte los colores base: fondo tipográfico y texto de fondo. */
+::selection {
+  color: var(--color-bg);
+  background: var(--color-text);
+}
+
+::-moz-selection {
+  color: var(--color-bg);
+  background: var(--color-text);
+}
+
 /* Capa de fundido al cambiar de tema: ui.js la crea con el color de fondo del
    tema saliente y la desvanece. Evita animar la tipografía, que al terminar
    la transición se re-renderiza y produce un parpadeo. */

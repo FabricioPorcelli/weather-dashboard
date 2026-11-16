@@ -230,7 +230,7 @@ export function openChatWindow() {
   elements.panel.hidden = false;
   if (MOBILE_QUERY.matches) {
     openMobileChat();
-  } else if (!openPopup || !openPopup(elements.panel)) {
+  } else if (!openPopup || !openPopup(elements.panel, handlePopupClosed)) {
     elements.panel.hidden = true;
     return;
   }
@@ -245,7 +245,6 @@ export function openChatWindow() {
  * Se desacopla del popup de Leaflet para que el teclado no lo tape.
  */
 function openMobileChat() {
-  closePopup?.();
   if (elements.panel.parentElement !== document.body) {
     document.body.append(elements.panel);
   }
@@ -253,7 +252,18 @@ function openMobileChat() {
   elements.panel.setAttribute('role', 'dialog');
   elements.panel.setAttribute('aria-modal', 'true');
   document.body.classList.add('chat-open');
+  closePopup?.();
   syncMobileViewport();
+}
+
+/**
+ * Limpia el estado del chat cuando el usuario cierra el popup con la cruz
+ * nativa de Leaflet.
+ */
+function handlePopupClosed() {
+  if (elements && !elements.panel.classList.contains('chat-panel--mobile')) {
+    elements.panel.hidden = true;
+  }
 }
 
 /**
