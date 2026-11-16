@@ -1,10 +1,10 @@
 # Weather Dashboard
 
-[**Demo en vivo**](https://weather.fabricioporcelli.com.ar/) · [Cómo lo hosteo](https://portfolio.fabricioporcelli.com.ar/projects/homelab.html) · [API](https://github.com/FabricioPorcelli/weather-api) · [Asistente](https://github.com/FabricioPorcelli/weather-assistant)
+[**Probalo en vivo**](https://weather.fabricioporcelli.com.ar/) · [Cómo lo hosteo](https://portfolio.fabricioporcelli.com.ar/projects/homelab.html) · [API](https://github.com/FabricioPorcelli/weather-api) · [Asistente](https://github.com/FabricioPorcelli/weather-assistant)
 
 Dashboard de clima con mapa interactivo, pronóstico de 5 días y un asistente conversacional opcional. Está hecho con **HTML, CSS y JavaScript vanilla**, sin frameworks, sin build y sin `node_modules`.
 
-La demo corre en un **self-hosted home lab**. En mi portfolio explico cómo está montada la infraestructura: [portfolio.fabricioporcelli.com.ar/projects/homelab.html](https://portfolio.fabricioporcelli.com.ar/projects/homelab.html).
+La aplicación corre en un **self-hosted home lab**. En mi portfolio explico cómo está montada la infraestructura: [portfolio.fabricioporcelli.com.ar/projects/homelab.html](https://portfolio.fabricioporcelli.com.ar/projects/homelab.html).
 
 ![Captura del dashboard](docs/screenshot.png)
 
@@ -62,9 +62,9 @@ Si usás otro puerto, agregalo a `CORS_ORIGINS` en el `.env` de la API.
 
 Para habilitar el chat, seguí las instrucciones de [weather-assistant](https://github.com/FabricioPorcelli/weather-assistant) y levantá también ese servicio.
 
-## Dónde corre
+## En vivo
 
-- **Demo:** https://weather.fabricioporcelli.com.ar/
+- **Aplicación:** https://weather.fabricioporcelli.com.ar/
 - **Infraestructura:** [self-hosted home lab](https://portfolio.fabricioporcelli.com.ar/projects/homelab.html)
 
 El despliegue está gestionado con Coolify y Cloudflare sobre un servidor propio. La API key de Visual Crossing y la clave del LLM viven únicamente en los backends; el frontend es estático y no contiene secretos.
