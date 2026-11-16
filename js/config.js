@@ -11,14 +11,21 @@
  */
 const IS_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
-/** URL base de la Weather API (ver README del repo weather-api). */
-export const API_BASE_URL = IS_LOCAL ? 'http://localhost:8000' : '/api';
+/**
+ * URL base de la Weather API.
+ * En local usa el servicio local; en producción, el subdominio público.
+ */
+export const API_BASE_URL = IS_LOCAL
+  ? 'http://localhost:8000'
+  : 'https://weather-api.fabricioporcelli.com.ar';
 
 /**
  * URL base del asistente conversacional.
  * Es opcional: si no está corriendo, el dashboard sigue funcionando sin él.
  */
-export const ASSISTANT_BASE_URL = IS_LOCAL ? 'http://localhost:8100' : '/assistant';
+export const ASSISTANT_BASE_URL = IS_LOCAL
+  ? 'http://localhost:8100'
+  : 'https://weather-assistant.fabricioporcelli.com.ar';
 
 /** Días de pronóstico solicitados a la API (rango permitido: 1 a 15). */
 export const FORECAST_DAYS = 5;
