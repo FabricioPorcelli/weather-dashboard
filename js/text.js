@@ -24,6 +24,18 @@ const PARTICLES = new Set([
 ]);
 
 /**
+ * Detecta si un texto tiene forma de par de coordenadas.
+ * Sirve para no mostrar coordenadas cuando la API o un dato viejo las devuelve
+ * como si fueran el nombre del lugar.
+ *
+ * @param {string} value
+ * @returns {boolean}
+ */
+export function isCoordinateLabel(value) {
+  return /^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/.test(String(value).trim());
+}
+
+/**
  * Normaliza un nombre de lugar: colapsa espacios y capitaliza cada palabra,
  * dejando en minúscula las partículas ("San Nicolás de los Arroyos").
  * Conserva las siglas de hasta 4 letras en mayúsculas ("CABA", "USA") y las

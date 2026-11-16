@@ -5,7 +5,7 @@
  */
 
 import { loadTheme, saveTheme } from './storage.js';
-import { formatPlaceName } from './text.js';
+import { formatPlaceName, isCoordinateLabel } from './text.js';
 
 const statusEl = document.querySelector('#status');
 const coordsEl = document.querySelector('#coords');
@@ -64,7 +64,7 @@ export function showError(error) {
 
 /** Mensajes de la API por código HTTP. El 404 usa el detalle que manda la API. */
 const ERROR_MESSAGES = {
-  0: 'No se pudo conectar con la API. ¿Está corriendo?',
+  0: 'No pudimos conectarnos con el servicio de clima. Probá de nuevo en unos segundos.',
   422: 'Los datos enviados no son válidos.',
   429: 'Demasiadas solicitudes. Esperá un minuto y probá de nuevo.',
   502: 'El proveedor del clima no está disponible. Probá más tarde.',
@@ -85,11 +85,12 @@ function messageForError(error) {
  * Renderiza la tarjeta de clima actual.
  *
  * @param {object} data Respuesta de /v1/weather/coords/...
+ * @param {string | null} [label] Nombre de lugar ya resuelto para mostrar.
  */
-export function renderCurrentWeather(data) {
+export function renderCurrentWeather(data, label = null) {
   statusEl.classList.remove('panel__hint--error');
   statusEl.textContent = '';
-  locationEl.textContent = formatPlaceName(data.location);
+  locationEl.textContent = resolvePlaceLabel(label, data.location);
   tempEl.textContent = Math.round(data.temperature_c);
   conditionsEl.textContent = data.conditions;
   feelsLikeEl.textContent = `${data.feels_like_c.toFixed(1)} °C`;
@@ -98,6 +99,39 @@ export function renderCurrentWeather(data) {
   precipEl.textContent = `${data.precipitation_mm.toFixed(1)} mm`;
   updatedEl.textContent = `Actualizado: ${formatDateTime(data.updated_at)}`;
   cardEl.hidden = false;
+}
+
+/**
+ * Actualiza solo el nombre del lugar cuando la geocodificación inversa
+ * termina después de que ya se renderizó el clima.
+ *
+ * @param {string | null} label
+ */
+export function setCurrentPlaceLabel(label) {
+  if (label && label.trim()) {
+    locationEl.textContent =
+      label === 'Lugar seleccionado' ? label : formatPlaceName(label);
+  }
+}
+
+/**
+ * Decide qué nombre mostrar: label resuelto, location de la API si no son
+ * coordenadas, o un texto genérico.
+ *
+ * @param {string | null} label
+ * @param {string} fallback
+ * @returns {string}
+ */
+function resolvePlaceLabel(label, fallback) {
+  if (label && label.trim()) {
+    return label === 'Lugar seleccionado' ? label : formatPlaceName(label);
+  }
+  if (fallback && !isCoordinateLabel(fallback)) {
+    return fallback === 'Lugar seleccionado'
+      ? fallback
+      : formatPlaceName(fallback);
+  }
+  return 'Lugar seleccionado';
 }
 
 /**
