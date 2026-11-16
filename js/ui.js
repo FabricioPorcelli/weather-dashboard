@@ -460,7 +460,7 @@ function systemTheme() {
 }
 
 /** Alto del panel colapsado: handle + ubicación + condiciones + temperatura. */
-const COLLAPSED_PANEL_HEIGHT = 148;
+const COLLAPSED_PANEL_HEIGHT = 236;
 
 /**
  * Activa la hoja inferior móvil: arrastre desde el handle y toque para
@@ -474,9 +474,7 @@ export function initPanelSheet() {
   }
 
   const mobileQuery = window.matchMedia('(max-width: 640px)');
-  const collapsibleParts = panel.querySelectorAll(
-    '.panel__collapsible, .card__extra',
-  );
+  const collapsibleParts = panel.querySelectorAll('.panel__collapsible');
   let collapsed = false;
   let dragging = false;
   let moved = false;

@@ -10,15 +10,16 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 
 - Mapa Leaflet a pantalla completa con tiles de OpenStreetMap y apariencia oscura.
 - **Clic en el mapa**: clima actual + pronóstico de 5 días, pedidos en paralelo.
-- **Búsqueda por ciudad o pueblo** con geocodificación (Nominatim) y recentrado del mapa.
+- **Búsqueda por ciudad o pueblo** con geocodificación (Nominatim, con fallback a Open-Meteo) y recentrado del mapa.
 - **Nombre del lugar** al hacer clic en el mapa, obtenido con geocodificación inversa.
 - Tarjeta con temperatura, sensación térmica, humedad, viento, precipitación y condiciones.
 - Tira de 5 días con barras de rango térmico, íconos y probabilidad de lluvia.
 - Tema claro/oscuro (guardado en `localStorage`) que también ajusta el mapa.
 - Restauración de la última ubicación y el zoom al abrir.
 - Diseño adaptable a escritorio y móvil, con chat a pantalla completa en celular.
-- Panel móvil colapsable: arrastrá la barra superior hacia abajo para dejar solo
-  el resumen del clima y hacia arriba para recuperar el dashboard completo.
+- Panel móvil colapsable: arrastrá la barra superior hacia abajo para dejar el
+  resumen y los detalles del clima, y hacia arriba para recuperar el dashboard
+  completo.
 - La API sigue exponiendo `X-Cache`, pero el dashboard no muestra esos badges.
 - Estados de carga y errores claros: 404, 422, 429, 502, 504 y API caída.
 - **Asistente conversacional opcional** en una ventana emergente anclada al punto
@@ -33,7 +34,7 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 
 - HTML, CSS y JavaScript vanilla con **ES Modules**.
 - [Leaflet 1.9.4](https://leafletjs.com/) (mapa) y [Open Sans](https://fonts.google.com/specimen/Open+Sans), por CDN.
-- [Nominatim](https://nominatim.org/) (OpenStreetMap) para convertir nombres de lugares en coordenadas y coordenadas en un nombre corto.
+- [Nominatim](https://nominatim.org/) (OpenStreetMap) para convertir nombres de lugares en coordenadas y coordenadas en un nombre corto. Si falla, la búsqueda usa [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) como respaldo.
 - [Weather API](https://github.com/FabricioPorcelli/weather-api) (FastAPI + Redis) como fuente de datos, corriendo en `localhost:8000`.
 - [Weather Assistant](https://github.com/FabricioPorcelli/weather-assistant) (FastAPI + PostgreSQL + LLM) como asistente opcional, corriendo en `localhost:8100`.
 
@@ -50,7 +51,8 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
   la API a mensajes claros, y descarta respuestas viejas con un `requestId`.
 - **APIs públicas con respeto**: Nominatim se consulta solo con acción explícita
   del usuario (búsqueda o clic en el mapa), con caché en memoria y espera de
-  1 req/s según su política.
+  1 req/s según su política. Si la búsqueda falla, Open-Meteo actúa como
+  fallback para no dejar al usuario sin buscador.
 - **Coordenadas solo internas**: el mapa y la API usan latitud/longitud, pero la
   interfaz muestra el nombre del lugar. Los badges de caché quedan en el código
   como herramienta de diagnóstico, ocultos para el usuario final.
@@ -185,7 +187,7 @@ weather-dashboard/
 │   ├── storage.js  # localStorage: tema, ubicación, anclas y UUID anónimo
 │   ├── api.js      # fetch a la Weather API, errores tipados y X-Cache
 │   ├── text.js     # normalización de nombres de lugares
-│   ├── geocode.js  # búsqueda y geocodificación inversa en Nominatim
+│   ├── geocode.js  # Nominatim + fallback Open-Meteo y geocodificación inversa
 │   ├── map.js      # Leaflet: mapa, marcador, recentrado y tema de los tiles
 │   ├── ui.js       # render del panel, tira de pronóstico, estados y tema
 │   ├── chat.js     # asistente opcional: SSE, texto, confianza y feedback
@@ -214,8 +216,9 @@ dashboard muestra en pantalla.
 - **Redondeo**: las coordenadas se redondean a 2 decimales (~1 km) en el
   frontend y en la API, así los clics vecinos comparten respuesta y caché. Si
   el punto no cambió respecto de la última consulta, no se repite el request.
-- **Nominatim**: se consulta solo al presionar Enter/botón (nunca mientras se
-  escribe), respetando el límite de 1 request/segundo y con caché en memoria.
+- **Buscador**: Nominatim se consulta solo al presionar Enter/botón (nunca
+  mientras se escribe), respetando el límite de 1 request/segundo y con caché
+  en memoria. Si no responde, se usa Open-Meteo Geocoding como fallback.
 - **`localStorage`**: `weather-dashboard:theme`, `weather-dashboard:last-location`,
   `weather-dashboard:chat-anchors` y `weather-dashboard:user-id`. Borralas para
   volver al estado inicial.

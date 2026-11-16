@@ -1,5 +1,6 @@
 /**
- * Geocodificación de lugares con Nominatim (OpenStreetMap).
+ * Geocodificación de lugares con Nominatim (OpenStreetMap), con Open-Meteo
+ * como fallback para la búsqueda por nombre.
  * Convierte el nombre escrito por el usuario en coordenadas y viceversa.
  * Política de uso: máximo 1 request por segundo y no usarlo para
  * autocompletado; por eso se consulta únicamente al presionar Enter/botón o
@@ -8,6 +9,7 @@
 
 const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
 const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
+const OPEN_METEO_SEARCH_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 
 /**
  * @type {Map<string, {
@@ -57,6 +59,39 @@ export async function geocodeCity(query) {
     return searchCache.get(cacheKey);
   }
 
+  let result = null;
+  try {
+    result = await searchWithNominatim(query);
+  } catch {
+    // Si Nominatim falla por red, CORS o rate limit, se prueba Open-Meteo.
+  }
+
+  if (!result) {
+    try {
+      result = await searchWithOpenMeteo(query);
+    } catch {
+      throw new GeocodeError(
+        'No pudimos conectar con el buscador. Probá de nuevo en unos segundos.',
+      );
+    }
+  }
+
+  searchCache.set(cacheKey, result);
+  return result;
+}
+
+/**
+ * Búsqueda principal con Nominatim.
+ *
+ * @param {string} query
+ * @returns {Promise<{
+ *   lat: number,
+ *   lon: number,
+ *   displayName: string,
+ *   label: string,
+ * } | null>}
+ */
+async function searchWithNominatim(query) {
   await waitForRateLimit();
 
   const url = new URL(NOMINATIM_SEARCH_URL);
@@ -64,41 +99,92 @@ export async function geocodeCity(query) {
   url.searchParams.set('format', 'jsonv2');
   url.searchParams.set('limit', '1');
   url.searchParams.set('addressdetails', '1');
+  url.searchParams.set('accept-language', 'es');
 
-  let response;
-  try {
-    response = await fetch(url, { headers: { 'Accept-Language': 'es' } });
-  } catch {
-    throw new GeocodeError('No se pudo buscar el lugar. Revisá tu conexión.');
-  }
-
+  const response = await fetch(url);
   if (!response.ok) {
-    throw new GeocodeError(
-      'No se pudo buscar el lugar. Esperá unos segundos y probá de nuevo.',
-    );
+    return null;
   }
 
   let results;
   try {
     results = await response.json();
   } catch {
-    throw new GeocodeError('La respuesta del buscador no fue válida. Probá de nuevo.');
+    return null;
   }
 
   const place = results[0];
-  const result = place
-    ? {
-        lat: Number(place.lat),
-        lon: Number(place.lon),
-        displayName: place.display_name,
-        label:
-          shortPlaceName(place) ??
-          place.display_name.split(',')[0].trim(),
-      }
-    : null;
+  if (!place) {
+    return null;
+  }
 
-  searchCache.set(cacheKey, result);
-  return result;
+  return {
+    lat: Number(place.lat),
+    lon: Number(place.lon),
+    displayName: place.display_name,
+    label:
+      shortPlaceName(place) ??
+      place.display_name.split(',')[0].trim(),
+  };
+}
+
+/**
+ * Fallback de búsqueda con Open-Meteo, que tiene CORS abierto y no requiere
+ * clave. Se usa cuando Nominatim no responde o no encuentra el lugar.
+ *
+ * @param {string} query
+ * @returns {Promise<{
+ *   lat: number,
+ *   lon: number,
+ *   displayName: string,
+ *   label: string,
+ * } | null>}
+ */
+async function searchWithOpenMeteo(query) {
+  const url = new URL(OPEN_METEO_SEARCH_URL);
+  url.searchParams.set('name', query);
+  url.searchParams.set('count', '1');
+  url.searchParams.set('language', 'es');
+  url.searchParams.set('format', 'json');
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    return null;
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    return null;
+  }
+
+  const place = data.results?.[0];
+  if (!place) {
+    return null;
+  }
+
+  const lat = Number(place.latitude);
+  const lon = Number(place.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return null;
+  }
+
+  const displayName = [
+    place.name,
+    place.admin2,
+    place.admin1,
+    place.country,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  return {
+    lat,
+    lon,
+    displayName,
+    label: place.name?.trim() || query,
+  };
 }
 
 /**
@@ -125,10 +211,11 @@ export async function reverseGeocode(lat, lon) {
   url.searchParams.set('format', 'jsonv2');
   url.searchParams.set('zoom', '10');
   url.searchParams.set('addressdetails', '1');
+  url.searchParams.set('accept-language', 'es');
 
   let response;
   try {
-    response = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+    response = await fetch(url);
   } catch {
     return null;
   }

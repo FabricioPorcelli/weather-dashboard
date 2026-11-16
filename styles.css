@@ -240,8 +240,7 @@ body {
   overflow: hidden;
 }
 
-.panel--collapsed .panel__collapsible,
-.panel--collapsed .card__extra {
+.panel--collapsed .panel__collapsible {
   grid-template-rows: 0fr;
   opacity: 0;
   pointer-events: none;
@@ -1162,13 +1161,14 @@ body.chat-open {
     transform: scaleX(1.12);
   }
 
-  /* Estado compacto: solo ubicación, condiciones y temperatura. */
+  /* Estado compacto: resumen y detalles, sin fecha de actualización. */
   .panel--collapsed .card--current {
     margin: 0;
-    padding: 0;
-    background: transparent;
-    border: 0;
     animation: none;
+  }
+
+  .panel--collapsed .card__updated {
+    display: none;
   }
 
   .panel--collapsed .card__hero {
