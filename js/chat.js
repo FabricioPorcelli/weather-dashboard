@@ -112,6 +112,7 @@ export function initChat({
     messages: document.querySelector('#chat-messages'),
     status: document.querySelector('#chat-status'),
     location: document.querySelector('#chat-location'),
+    suggestions: document.querySelector('#chat-suggestions'),
   };
 
   elements.form.addEventListener('submit', (event) => {
@@ -124,6 +125,7 @@ export function initChat({
 
   elements.open.addEventListener('click', openChatWindow);
   elements.close?.addEventListener('click', closeChatWindow);
+  elements.suggestions?.addEventListener('click', handleSuggestionClick);
   document.addEventListener('keydown', handleChatKeydown);
   window.addEventListener('resize', handleViewportChange);
   if (window.visualViewport) {
@@ -720,6 +722,8 @@ function renderRichText(element, text) {
  * @param {string} text
  */
 function appendMessage(role, text) {
+  setSuggestionsVisible(false);
+
   const message = document.createElement('div');
   message.className = `chat__message chat__message--${role}`;
 
@@ -967,6 +971,32 @@ function updateLocationLabel() {
 }
 
 /**
+ * Usa una pregunta de ejemplo como borrador del mensaje.
+ *
+ * @param {MouseEvent} event
+ */
+function handleSuggestionClick(event) {
+  const button = event.target.closest?.('.chat__suggestion');
+  if (!button) {
+    return;
+  }
+  const question = button.dataset.question ?? button.textContent.trim();
+  elements.input.value = question;
+  elements.input.focus({ preventScroll: true });
+}
+
+/**
+ * Muestra u oculta las preguntas de ejemplo.
+ *
+ * @param {boolean} visible
+ */
+function setSuggestionsVisible(visible) {
+  if (elements?.suggestions) {
+    elements.suggestions.hidden = !visible;
+  }
+}
+
+/**
  * Habilita o deshabilita los controles mientras se espera una respuesta.
  *
  * @param {boolean} busy
@@ -1002,6 +1032,7 @@ function resetConversation() {
   if (elements) {
     elements.messages.replaceChildren();
     hideStatus();
+    setSuggestionsVisible(true);
   }
 }
 

@@ -12,6 +12,10 @@ const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const TILE_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
+/** HTML estático del marcador: un punto con un pulso suave. */
+const LOCATION_ICON_HTML =
+  '<span class="location-marker__pulse"></span><span class="location-marker__dot"></span>';
+
 /** @type {L.Map | null} Instancia del mapa (null hasta llamar a initMap). */
 let map = null;
 
@@ -81,7 +85,20 @@ export function placeMarker(lat, lon) {
     marker.setLatLng([lat, lon]);
     return;
   }
-  marker = L.marker([lat, lon]).addTo(map);
+
+  const icon = L.divIcon({
+    className: 'location-marker',
+    html: LOCATION_ICON_HTML,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -18],
+  });
+
+  marker = L.marker([lat, lon], {
+    icon,
+    title: 'Ubicación seleccionada',
+    alt: 'Ubicación seleccionada',
+  }).addTo(map);
 }
 
 /**
