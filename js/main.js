@@ -12,7 +12,6 @@ import {
   getForecast,
   getForecastByCity,
 } from './api.js';
-import { refreshChartTheme, renderForecastChart } from './chart.js';
 import {
   initChat,
   openChatWindow,
@@ -99,7 +98,6 @@ async function loadWeather(
     }
     renderCurrentWeather(current.data, fallbackLabel);
     renderForecast(forecast.data);
-    renderForecastChart(forecast.data.days);
     renderCacheBadges({ current: current.cache, forecast: forecast.cache });
 
     if (labelPromise) {
@@ -202,7 +200,6 @@ const initialTheme = document.documentElement.dataset.theme;
 
 document.addEventListener('themechange', (event) => {
   setMapTheme(event.detail.theme);
-  refreshChartTheme();
 });
 
 initMap(async (lat, lon) => {

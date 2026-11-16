@@ -5,19 +5,21 @@
    ========================================================================== */
 
 :root {
-  --color-bg: #0f172a;
-  --color-panel: rgba(15, 23, 42, 0.92);
-  --color-border: rgba(148, 163, 184, 0.25);
-  --color-text: #e2e8f0;
-  --color-muted: #94a3b8;
-  --color-accent: #38bdf8;
-  --color-on-accent: #0f172a;
-  --color-warm: #fb923c;
-  --color-danger: #f87171;
-  --color-hit: #4ade80;
-  --color-surface: rgba(148, 163, 184, 0.08);
-  --color-surface-strong: rgba(148, 163, 184, 0.14);
-  --panel-width: 360px;
+  /* Paleta base: Ink Black + Cream, con azul cobalto como acento. */
+  --color-bg: #111111;
+  --color-panel: rgba(17, 17, 17, 0.94);
+  --color-border: rgba(243, 238, 227, 0.14);
+  --color-text: #f3eee3;
+  --color-muted: #aaa297;
+  --color-accent: #7bb8ff;
+  --color-on-accent: #111111;
+  --color-warm: #f2b36b;
+  --color-danger: #ff8a80;
+  --color-hit: #8bd7a8;
+  --color-surface: rgba(243, 238, 227, 0.06);
+  --color-surface-strong: rgba(243, 238, 227, 0.1);
+  --color-accent-soft: rgba(123, 184, 255, 0.16);
+  --panel-width: 380px;
   --radius: 18px;
   color-scheme: dark;
 }
@@ -25,18 +27,19 @@
 /* Tema claro: pisa las variables del tema oscuro definido en :root.
    Va después en el archivo para ganar por orden de aparición. */
 [data-theme='light'] {
-  --color-bg: #f1f5f9;
-  --color-panel: rgba(255, 255, 255, 0.93);
-  --color-border: rgba(15, 23, 42, 0.15);
-  --color-text: #0f172a;
-  --color-muted: #64748b;
-  --color-accent: #0284c7;
-  --color-on-accent: #ffffff;
-  --color-warm: #ea580c;
-  --color-danger: #dc2626;
-  --color-hit: #16a34a;
-  --color-surface: rgba(15, 23, 42, 0.04);
-  --color-surface-strong: rgba(15, 23, 42, 0.08);
+  --color-bg: #f3eee3;
+  --color-panel: rgba(243, 238, 227, 0.96);
+  --color-border: rgba(17, 17, 17, 0.14);
+  --color-text: #111111;
+  --color-muted: #6f675c;
+  --color-accent: #1f5fcc;
+  --color-on-accent: #f3eee3;
+  --color-warm: #b85c2a;
+  --color-danger: #b42318;
+  --color-hit: #2e7d5b;
+  --color-surface: rgba(17, 17, 17, 0.045);
+  --color-surface-strong: rgba(17, 17, 17, 0.08);
+  --color-accent-soft: rgba(31, 95, 204, 0.1);
   color-scheme: light;
 }
 
@@ -73,9 +76,50 @@ html,
 body {
   margin: 0;
   height: 100%;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
+}
+
+/* Leaflet define su propia tipografía; la alineamos con la del dashboard. */
+.leaflet-container,
+.leaflet-popup-content,
+.leaflet-control {
+  font-family: inherit;
+}
+
+/* Scrollbar alineado con la paleta, en panel y conversación. */
+.panel,
+.chat__messages {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.panel::-webkit-scrollbar,
+.chat__messages::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.panel::-webkit-scrollbar-track,
+.chat__messages::-webkit-scrollbar-track,
+.panel::-webkit-scrollbar-corner,
+.chat__messages::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.panel::-webkit-scrollbar-thumb,
+.chat__messages::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+
+.panel::-webkit-scrollbar-thumb:hover,
+.chat__messages::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+  background-clip: padding-box;
 }
 
 #map {
@@ -88,6 +132,56 @@ body {
    El cambio queda cubierto por la capa de fundido del tema (ver ui.js). */
 .map--dark-tiles .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+
+/* Marcador de ubicación: círculo con halo y pulso, en lugar del pin genérico. */
+.location-marker {
+  overflow: visible;
+  background: transparent;
+  border: 0;
+}
+
+.location-marker__dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  background: var(--color-accent);
+  border: 3px solid var(--color-bg);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 4px var(--color-accent-soft),
+    0 6px 16px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+}
+
+.location-marker__pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.6);
+  animation: location-pulse 2.6s ease-out infinite;
+}
+
+@keyframes location-pulse {
+  0% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  70% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.45);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.45);
+  }
 }
 
 .panel {
@@ -106,6 +200,18 @@ body {
   /* Leaflet usa z-index 1000 en sus controles; el panel va al mismo nivel
      y, al estar después en el DOM, se dibuja por encima. */
   z-index: 1000;
+  animation: panel-in 0.45s ease both;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .panel__header {
@@ -148,12 +254,13 @@ body {
   border: 1px solid var(--color-border);
   border-radius: 10px;
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .panel__theme:hover {
   color: var(--color-accent);
   border-color: var(--color-accent);
+  transform: rotate(8deg);
 }
 
 .icon {
@@ -245,11 +352,15 @@ body {
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
-  transition: filter 0.2s ease;
+  transition: filter 0.2s ease, transform 0.15s ease;
 }
 
 .search__button:hover {
   filter: brightness(1.1);
+}
+
+.search__button:active {
+  transform: scale(0.98);
 }
 
 /* --- Badges de caché: se conservan ocultos -------------------------------- */
@@ -290,6 +401,18 @@ body {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 16px;
+  animation: card-in 0.35s ease both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .card__hero {
@@ -376,62 +499,160 @@ body {
 
 .card__title {
   margin: 0 0 12px;
-  font-size: 1.02rem;
+  font-size: 1.08rem;
   letter-spacing: -0.01em;
 }
 
-.chart {
-  position: relative;
-  height: 190px;
-  margin-bottom: 16px;
-}
-
-.days {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.forecast {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   margin: 0;
   padding: 0;
+  overflow: hidden;
   list-style: none;
-}
-
-.day {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 11px 12px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  transition: border-color 0.2s ease;
+  border-radius: 14px;
 }
 
-.day:hover {
-  border-color: var(--color-accent);
+.forecast-day {
+  display: flex;
+  min-width: 0;
+  padding: 11px 4px 10px;
+  border-left: 1px solid var(--color-border);
+  text-align: center;
+  transition: background 0.2s ease;
+  animation: forecast-in 0.45s ease both;
+  animation-delay: calc(var(--i) * 45ms);
 }
 
-.day__info {
+.forecast-day:first-child {
+  border-left: 0;
+}
+
+.forecast-day:hover {
+  background: var(--color-surface-strong);
+}
+
+.forecast-day--today {
+  background: var(--color-accent-soft);
+}
+
+.forecast-day__content {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
 }
 
-.day__date {
-  font-size: 0.9rem;
-  font-weight: 600;
+.forecast-day__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   text-transform: capitalize;
 }
 
-.day__conditions {
+.forecast-day__date {
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.68rem;
+  white-space: nowrap;
 }
 
-.day__temps {
-  white-space: nowrap;
-  font-size: 0.95rem;
+.forecast-day__icon {
+  width: 20px;
+  height: 20px;
+  margin: 2px 0;
+  color: var(--color-muted);
+}
+
+.forecast-day--today .forecast-day__icon {
+  color: var(--color-accent);
+}
+
+.forecast-day__temp {
+  font-size: 0.88rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.forecast-day__temp--max {
+  color: var(--color-text);
+}
+
+.forecast-day__temp--min {
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+.forecast-day__bar {
+  position: relative;
+  width: 7px;
+  height: 72px;
+  margin: 1px 0;
+  overflow: hidden;
+  background: var(--color-surface-strong);
+  border-radius: 999px;
+}
+
+.forecast-day__range {
+  position: absolute;
+  bottom: var(--bar-bottom);
+  left: 0;
+  width: 100%;
+  height: var(--bar-height);
+  min-height: 8px;
+  background: linear-gradient(180deg, var(--color-warm), var(--color-accent));
+  border-radius: 999px;
+  transform-origin: bottom;
+  animation: range-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 45ms + 80ms);
+}
+
+.forecast-day__rain {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  color: var(--color-accent);
+  font-size: 0.64rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.forecast-day__rain-dot {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+@keyframes forecast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes range-in {
+  from {
+    opacity: 0.35;
+    transform: scaleY(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
 }
 
 /* --- Asistente opcional -------------------------------------------------- */
@@ -449,13 +670,18 @@ body {
   border: 1px solid var(--color-border);
   border-radius: 10px;
   cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease,
+    transform 0.15s ease;
 }
 
 .chat-open:hover {
   color: var(--color-accent);
   background: var(--color-surface);
   border-color: var(--color-accent);
+}
+
+.chat-open:active {
+  transform: scale(0.98);
 }
 
 /* En escritorio el chat vive en un popup de Leaflet; en móvil, en una hoja
@@ -483,25 +709,64 @@ body {
 .chat-popup .leaflet-popup-close-button {
   top: 6px;
   right: 6px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   color: var(--color-muted);
+  font: 400 1.6rem/1 "Open Sans", sans-serif;
+  border-radius: 50%;
 }
 
 .chat-popup .leaflet-popup-close-button:hover {
   color: var(--color-text);
+  background: var(--color-surface);
 }
 
 .chat__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
-  padding-right: 18px;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-right: 38px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.chat__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.chat__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.chat__avatar svg {
+  width: 20px;
+  height: 20px;
+}
+
+.chat__heading {
+  min-width: 0;
 }
 
 .chat__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
 }
 
 .chat__location {
@@ -510,7 +775,55 @@ body {
   font-size: 0.8rem;
 }
 
+.chat__suggestions {
+  margin: 0 0 10px;
+}
+
+.chat__suggestions-title {
+  margin: 0 0 6px;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+.chat__suggestions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chat__suggestion {
+  padding: 6px 10px;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.74rem;
+  line-height: 1.2;
+  text-align: left;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease,
+    transform 0.15s ease;
+}
+
+.chat__suggestion:hover {
+  color: var(--color-accent);
+  background: var(--color-surface-strong);
+  border-color: var(--color-accent);
+}
+
+.chat__suggestion:active {
+  transform: scale(0.98);
+}
+
+@media (min-width: 641px) {
+  .chat__suggestions:not([hidden]) + .chat__messages {
+    height: clamp(160px, 30vh, 240px);
+  }
+}
+
 .chat__messages {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -519,6 +832,28 @@ body {
   padding-right: 4px;
   overflow-y: auto;
   scrollbar-width: thin;
+}
+
+/* Marca de agua discreta cuando todavía no hay mensajes. */
+.chat__messages:empty::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(44%, 150px);
+  aspect-ratio: 1;
+  background: var(--color-accent);
+  opacity: 0.08;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z'/%3E%3Cpath d='m16.5 7 .5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5.5-1.2Z'/%3E%3C/svg%3E");
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z'/%3E%3Cpath d='m16.5 7 .5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5.5-1.2Z'/%3E%3C/svg%3E");
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
 }
 
 .chat__message {
@@ -539,7 +874,7 @@ body {
   font-size: 0.88rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
-  background: rgba(148, 163, 184, 0.12);
+  background: var(--color-surface-strong);
   border: 1px solid var(--color-border);
   border-radius: 12px;
 }
@@ -589,7 +924,7 @@ body {
   color: var(--color-text);
   font: inherit;
   font-size: 0.72rem;
-  background: rgba(148, 163, 184, 0.1);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 999px;
   cursor: pointer;
@@ -667,7 +1002,7 @@ body {
   color: var(--color-text);
   font: inherit;
   font-size: 0.85rem;
-  background: rgba(148, 163, 184, 0.08);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
 }
@@ -687,6 +1022,15 @@ body {
   border: 0;
   border-radius: 8px;
   cursor: pointer;
+  transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+.chat__send:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.chat__send:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .chat__send:disabled {
@@ -711,8 +1055,8 @@ body.chat-open {
     right: 8px;
     bottom: calc(8px + env(safe-area-inset-bottom));
     width: auto;
-    max-height: 55vh;
-    max-height: min(55dvh, 500px);
+    max-height: 68vh;
+    max-height: min(68dvh, 620px);
     padding: 14px 16px;
     background: var(--color-panel);
     border-radius: 18px;
@@ -771,7 +1115,7 @@ body.chat-open {
   }
 
   .card--current {
-    padding: 14px;
+    padding: 13px;
   }
 
   .card__hero {
@@ -791,13 +1135,44 @@ body.chat-open {
   }
 
   .card__details {
-    gap: 10px 12px;
-    padding-top: 12px;
+    gap: 8px 12px;
+    padding-top: 10px;
   }
 
-  .chart {
-    height: 150px;
-    margin-bottom: 12px;
+  .forecast-day {
+    padding: 9px 2px 8px;
+  }
+
+  .forecast-day__content {
+    gap: 3px;
+  }
+
+  .forecast-day__label {
+    font-size: 0.74rem;
+  }
+
+  .forecast-day__date {
+    font-size: 0.62rem;
+  }
+
+  .forecast-day__icon {
+    width: 17px;
+    height: 17px;
+    margin: 1px 0;
+  }
+
+  .forecast-day__temp {
+    font-size: 0.8rem;
+  }
+
+  .forecast-day__bar {
+    width: 6px;
+    height: 52px;
+  }
+
+  .forecast-day__rain {
+    padding: 2px 4px;
+    font-size: 0.58rem;
   }
 
   .chat-open {
@@ -819,7 +1194,7 @@ body.chat-open {
     margin: 0;
     padding: max(10px, env(safe-area-inset-top)) 14px
       max(10px, env(safe-area-inset-bottom));
-    background: var(--color-panel);
+    background: var(--color-bg);
     border: 0;
     border-radius: 0;
     box-shadow: none;
@@ -833,8 +1208,14 @@ body.chat-open {
 
   .chat-panel--mobile .chat__header {
     flex: 0 0 auto;
-    margin-bottom: 2px;
+    margin-bottom: 10px;
     padding-right: 0;
+  }
+
+  .chat-panel--mobile .chat__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
   }
 
   .chat-panel--mobile .chat__title {
@@ -843,6 +1224,11 @@ body.chat-open {
 
   .chat-panel--mobile .chat__location {
     margin-bottom: 8px;
+  }
+
+  .chat-panel--mobile .chat__suggestion {
+    padding: 7px 10px;
+    font-size: 0.8rem;
   }
 
   .chat-panel--mobile .chat__messages {
@@ -880,12 +1266,12 @@ body.chat-open {
     display: grid;
     place-items: center;
     flex: 0 0 auto;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     color: var(--color-muted);
     font: inherit;
-    font-size: 1.6rem;
+    font-size: 1.9rem;
     line-height: 1;
     background: transparent;
     border: 1px solid var(--color-border);

@@ -175,57 +175,201 @@ function formatDateTime(isoDate) {
   });
 }
 
+/** Íconos SVG estáticos para acompañar cada día del pronóstico. */
+const WEATHER_ICON_PATHS = {
+  sun: `
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.42-1.42"></path>
+  `,
+  cloud:
+    '<path d="M17.5 19H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 9.5a4.75 4.75 0 0 1-.5 9.5Z"></path>',
+  rain: `
+    <path d="M17.5 16H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 6.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
+    <path d="M8 19v2M12 19v2M16 19v2"></path>
+  `,
+  storm: `
+    <path d="M17.5 15H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 5.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
+    <path d="m13 16-2 3h3l-1 3"></path>
+  `,
+  snow: `
+    <path d="M17.5 15H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 5.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
+    <path d="M8 19h.01M12 19h.01M16 19h.01M8 22h.01M12 22h.01M16 22h.01"></path>
+  `,
+  fog: '<path d="M4 10h16M4 14h16M4 18h10"></path>',
+};
+
 /**
- * Renderiza la lista de días del pronóstico.
+ * Renderiza la tira de días del pronóstico.
  *
  * @param {object} data Respuesta de /v1/forecast/coords/...
  */
 export function renderForecast(data) {
-  daysEl.replaceChildren(...data.days.map(createDayItem));
+  const temperatures = data.days.flatMap((day) => [
+    day.temp_min_c,
+    day.temp_max_c,
+  ]);
+  const minTemp = Math.min(...temperatures);
+  const maxTemp = Math.max(...temperatures);
+  const range = Math.max(maxTemp - minTemp, 1);
+
+  daysEl.replaceChildren(
+    ...data.days.map((day, index) =>
+      createDayItem(day, {
+        minTemp,
+        range,
+        index,
+        isToday: index === 0,
+      }),
+    ),
+  );
   forecastCardEl.hidden = false;
 }
 
 /**
- * Crea el elemento <li> de un día del pronóstico.
+ * Crea una tarjeta de día con una barra que representa el rango térmico.
  *
  * @param {object} day Día de la respuesta de /v1/forecast/coords/...
+ * @param {{ minTemp: number, range: number, index: number, isToday: boolean }} context
  * @returns {HTMLLIElement}
  */
-function createDayItem(day) {
+function createDayItem(day, { minTemp, range, index, isToday }) {
   const item = document.createElement('li');
-  item.className = 'day';
+  item.className = 'forecast-day';
+  item.classList.toggle('forecast-day--today', isToday);
+  item.style.setProperty('--i', String(index));
 
-  const info = document.createElement('div');
-  info.className = 'day__info';
+  const dayName = isToday ? 'Hoy' : formatDayName(day.date);
+  const ariaLabel = [
+    `${dayName}, ${formatDayNumber(day.date)}:`,
+    `máxima ${Math.round(day.temp_max_c)} grados,`,
+    `mínima ${Math.round(day.temp_min_c)} grados,`,
+    `${day.precipitation_probability}% de probabilidad de lluvia,`,
+    day.conditions,
+  ].join(' ');
+  item.setAttribute('aria-label', ariaLabel);
+
+  const content = document.createElement('div');
+  content.className = 'forecast-day__content';
+  content.setAttribute('aria-hidden', 'true');
+
+  const label = document.createElement('span');
+  label.className = 'forecast-day__label';
+  label.textContent = dayName;
 
   const date = document.createElement('span');
-  date.className = 'day__date';
-  date.textContent = formatDayLong(day.date);
+  date.className = 'forecast-day__date';
+  date.textContent = formatDayNumber(day.date);
 
-  const conditions = document.createElement('span');
-  conditions.className = 'day__conditions';
-  conditions.textContent = `${day.conditions} · Lluvia ${day.precipitation_probability}%`;
+  const icon = createWeatherIcon(day.conditions);
 
-  info.append(date, conditions);
+  const max = document.createElement('span');
+  max.className = 'forecast-day__temp forecast-day__temp--max';
+  max.textContent = `${Math.round(day.temp_max_c)}°`;
 
-  const temps = document.createElement('div');
-  temps.className = 'day__temps';
-  temps.textContent = `${Math.round(day.temp_max_c)}° / ${Math.round(day.temp_min_c)}°`;
+  const bar = document.createElement('div');
+  bar.className = 'forecast-day__bar';
 
-  item.append(info, temps);
+  const fill = document.createElement('span');
+  fill.className = 'forecast-day__range';
+  const bottom = ((day.temp_min_c - minTemp) / range) * 100;
+  const height = Math.max(
+    ((day.temp_max_c - day.temp_min_c) / range) * 100,
+    8,
+  );
+  const visibleBottom = Math.min(Math.max(bottom, 0), 100 - height);
+  fill.style.setProperty('--bar-bottom', `${visibleBottom}%`);
+  fill.style.setProperty('--bar-height', `${height}%`);
+  bar.append(fill);
+
+  const min = document.createElement('span');
+  min.className = 'forecast-day__temp forecast-day__temp--min';
+  min.textContent = `${Math.round(day.temp_min_c)}°`;
+
+  const rain = document.createElement('span');
+  rain.className = 'forecast-day__rain';
+  const rainDot = document.createElement('span');
+  rainDot.className = 'forecast-day__rain-dot';
+  rain.append(
+    rainDot,
+    document.createTextNode(`${day.precipitation_probability}%`),
+  );
+
+  content.append(label, date, icon, max, bar, min, rain);
+  item.append(content);
   return item;
 }
 
 /**
- * Formatea "2026-09-25" como "viernes 25 sep" en horario local.
- * Se agrega T00:00:00 para que la fecha no se corra un día por la zona horaria.
+ * Crea un ícono SVG decorativo según las condiciones del día.
+ *
+ * @param {string} conditions
+ * @returns {SVGSVGElement}
+ */
+function createWeatherIcon(conditions) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.7');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  svg.classList.add('forecast-day__icon');
+  // El contenido es SVG estático; no se interpola texto de la API.
+  svg.innerHTML = WEATHER_ICON_PATHS[weatherIconKind(conditions)];
+  return svg;
+}
+
+/**
+ * Traduce las condiciones de la API a uno de los íconos disponibles.
+ *
+ * @param {string} conditions
+ * @returns {keyof typeof WEATHER_ICON_PATHS}
+ */
+function weatherIconKind(conditions) {
+  const value = conditions.toLocaleLowerCase('es');
+  if (/tormenta|trueno|rayo/.test(value)) {
+    return 'storm';
+  }
+  if (/nieve|nevada|granizo/.test(value)) {
+    return 'snow';
+  }
+  if (/lluvia|llovizna|chubasco/.test(value)) {
+    return 'rain';
+  }
+  if (/niebla|neblina|bruma/.test(value)) {
+    return 'fog';
+  }
+  if (/nublado|nubes|nuboso|parcialmente/.test(value)) {
+    return 'cloud';
+  }
+  if (/sol|despejado|clear/.test(value)) {
+    return 'sun';
+  }
+  return 'cloud';
+}
+
+/**
+ * Formatea "2026-09-25" como "vie" en horario local.
  *
  * @param {string} isoDate
  * @returns {string}
  */
-function formatDayLong(isoDate) {
+function formatDayName(isoDate) {
   return new Date(`${isoDate}T00:00:00`).toLocaleDateString('es-AR', {
-    weekday: 'long',
+    weekday: 'short',
+  });
+}
+
+/**
+ * Formatea "2026-09-25" como "25 sep" en horario local.
+ *
+ * @param {string} isoDate
+ * @returns {string}
+ */
+function formatDayNumber(isoDate) {
+  return new Date(`${isoDate}T00:00:00`).toLocaleDateString('es-AR', {
     day: 'numeric',
     month: 'short',
   });
