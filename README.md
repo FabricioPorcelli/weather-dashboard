@@ -1,6 +1,6 @@
 # Weather Dashboard
 
-Dashboard web estático que muestra el clima actual y el pronóstico de 5 días de una ubicación elegida en un mapa. Consume la **Weather API** (proyecto separado que envuelve Visual Crossing) y usa Leaflet y Chart.js por CDN, **sin frameworks, sin build y sin `node_modules`**: el objetivo es practicar `fetch`, DOM y el ciclo request/response.
+Dashboard web estático que muestra el clima actual y el pronóstico de 5 días de una ubicación elegida en un mapa. Consume la **Weather API** (proyecto separado que envuelve Visual Crossing) y usa Leaflet por CDN, **sin frameworks, sin build y sin `node_modules`**: el objetivo es practicar `fetch`, DOM y el ciclo request/response.
 
 > Repo de la API: https://github.com/FabricioPorcelli/weather-api. Instrucciones para levantarla más abajo.
 
@@ -13,23 +13,24 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 - **Búsqueda por ciudad o pueblo** con geocodificación (Nominatim) y recentrado del mapa.
 - **Nombre del lugar** al hacer clic en el mapa, obtenido con geocodificación inversa.
 - Tarjeta con temperatura, sensación térmica, humedad, viento, precipitación y condiciones.
-- Gráfico de temperaturas máximas/mínimas (Chart.js) y listado diario con probabilidad de lluvia.
-- Tema claro/oscuro (guardado en `localStorage`) que también ajusta el mapa y el gráfico.
+- Tira de 5 días con barras de rango térmico, íconos y probabilidad de lluvia.
+- Tema claro/oscuro (guardado en `localStorage`) que también ajusta el mapa.
 - Restauración de la última ubicación y el zoom al abrir.
 - Diseño adaptable a escritorio y móvil, con chat a pantalla completa en celular.
 - La API sigue exponiendo `X-Cache`, pero el dashboard no muestra esos badges.
 - Estados de carga y errores claros: 404, 422, 429, 502, 504 y API caída.
 - **Asistente conversacional opcional** en una ventana emergente anclada al punto
-  del mapa, con streaming SSE y respuestas en lenguaje natural. Muestra el nivel
-  de confianza al final y guarda puntos en el mapa para retomar conversaciones.
-  Si el asistente no está corriendo, el dashboard sigue funcionando normalmente.
+  del mapa, con streaming SSE y respuestas en lenguaje natural. Muestra preguntas
+  de ejemplo para empezar, el nivel de confianza al final y guarda puntos en el
+  mapa para retomar conversaciones. Si el asistente no está corriendo, el
+  dashboard sigue funcionando normalmente.
 - Feedback de comodidad después de un consejo de ropa. El navegador usa un UUID
   anónimo y lo guarda en `localStorage`.
 
 ## Tecnologías
 
 - HTML, CSS y JavaScript vanilla con **ES Modules**.
-- [Leaflet 1.9.4](https://leafletjs.com/) (mapa) y [Chart.js 4.4.7](https://www.chartjs.org/) (gráfico), por CDN.
+- [Leaflet 1.9.4](https://leafletjs.com/) (mapa) y [Open Sans](https://fonts.google.com/specimen/Open+Sans), por CDN.
 - [Nominatim](https://nominatim.org/) (OpenStreetMap) para convertir nombres de lugares en coordenadas y coordenadas en un nombre corto.
 - [Weather API](https://github.com/FabricioPorcelli/weather-api) (FastAPI + Redis) como fuente de datos, corriendo en `localhost:8000`.
 - [Weather Assistant](https://github.com/FabricioPorcelli/weather-assistant) (FastAPI + PostgreSQL + LLM) como asistente opcional, corriendo en `localhost:8100`.
@@ -38,6 +39,8 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 
 - **Sin frameworks ni build**: HTML, CSS y JavaScript vanilla con ES Modules;
   el foco está en el ciclo request/response y el DOM, no en herramientas.
+- **Pronóstico en tira**: cinco columnas con barras de rango, íconos y lluvia.
+  Reemplaza al gráfico de líneas: pesa menos y se lee mejor en móvil.
 - **Coordenadas redondeadas y dedupe**: se redondea a 2 decimales (igual que la
   API) y no se repite el request si el punto no cambió; así se aprovecha la
   caché y se cuida el rate limit.
@@ -49,9 +52,9 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 - **Coordenadas solo internas**: el mapa y la API usan latitud/longitud, pero la
   interfaz muestra el nombre del lugar. Los badges de caché quedan en el código
   como herramienta de diagnóstico, ocultos para el usuario final.
-- **Separación por módulos**: `api`, `geocode`, `map`, `chart`, `ui`, `storage`,
-  `chat` y `main` con una única dirección de dependencias; la UI no conoce
-  detalles de HTTP.
+- **Separación por módulos**: `api`, `geocode`, `map`, `ui`, `storage`, `chat`
+  y `main` con una única dirección de dependencias; la UI no conoce detalles de
+  HTTP.
 - **Asistente opcional**: en escritorio el chat se abre desde “Preguntar sobre
   este lugar” en un popup de Leaflet anclado al marcador. En móvil ocupa la
   pantalla completa y se ajusta al viewport visible cuando aparece el teclado.
@@ -149,7 +152,7 @@ CORS ya está preparado en `.env.example` con
 el dashboard desde otro puerto, actualizá esa variable y recreá el contenedor.
 
 Si el asistente no está corriendo, el panel muestra un error al enviar un
-mensaje, pero el clima, el pronóstico y el gráfico siguen funcionando.
+mensaje, pero el clima y el pronóstico siguen funcionando.
 
 ## Configuración
 
@@ -180,10 +183,9 @@ weather-dashboard/
 │   ├── storage.js  # localStorage: tema, ubicación, anclas y UUID anónimo
 │   ├── api.js      # fetch a la Weather API, errores tipados y X-Cache
 │   ├── text.js     # normalización de nombres de lugares
-│   ├── geocode.js  # búsqueda de ciudades en Nominatim
+│   ├── geocode.js  # búsqueda y geocodificación inversa en Nominatim
 │   ├── map.js      # Leaflet: mapa, marcador, recentrado y tema de los tiles
-│   ├── chart.js    # gráfico de máximas/mínimas con Chart.js
-│   ├── ui.js       # render del panel, estados, badges y tema
+│   ├── ui.js       # render del panel, tira de pronóstico, estados y tema
 │   ├── chat.js     # asistente opcional: SSE, texto, confianza y feedback
 │   └── main.js     # punto de entrada: conecta eventos y módulos
 └── README.md
