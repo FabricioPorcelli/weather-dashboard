@@ -20,9 +20,10 @@ import {
   setChatLocation,
 } from './chat.js';
 import { CITY_ZOOM } from './config.js';
-import { geocodeCity } from './geocode.js';
+import { geocodeCity, reverseGeocode } from './geocode.js';
 import {
   centerOn,
+  closeChatPopup,
   getZoom,
   initMap,
   openChatPopup,
@@ -35,12 +36,13 @@ import {
   loadLastLocation,
   saveLastLocation,
 } from './storage.js';
-import { formatPlaceName } from './text.js';
+import { formatPlaceName, isCoordinateLabel } from './text.js';
 import {
   initTheme,
   renderCacheBadges,
   renderCurrentWeather,
   renderForecast,
+  setCurrentPlaceLabel,
   setSelectedCoords,
   showError,
   showLoading,
@@ -62,14 +64,31 @@ let currentLocation = null;
 let lastQueryKey = null;
 
 /**
+ * Devuelve un nombre de lugar utilizable, descartando coordenadas viejas.
+ *
+ * @param {string | null | undefined} label
+ * @returns {string | null}
+ */
+function usablePlaceLabel(label) {
+  return label && !isCoordinateLabel(label) ? formatPlaceName(label) : null;
+}
+
+/**
  * Pide clima y pronóstico en paralelo y renderiza el resultado.
  * Si mientras tanto se lanzó otra consulta, descarta esta respuesta.
  *
  * @param {Promise<object>} currentPromise Clima actual.
  * @param {Promise<object>} forecastPromise Pronóstico.
+ * @param {Promise<string | null> | null} [labelPromise] Nombre del lugar en resolución.
+ * @param {string | null} [fallbackLabel] Nombre a mostrar mientras se resuelve.
  * @returns {Promise<object | null>} Datos del clima actual, o null si no se renderizó.
  */
-async function loadWeather(currentPromise, forecastPromise) {
+async function loadWeather(
+  currentPromise,
+  forecastPromise,
+  labelPromise = null,
+  fallbackLabel = null,
+) {
   const currentRequest = ++requestId;
   showLoading();
 
@@ -78,10 +97,23 @@ async function loadWeather(currentPromise, forecastPromise) {
     if (currentRequest !== requestId) {
       return null;
     }
-    renderCurrentWeather(current.data);
+    renderCurrentWeather(current.data, fallbackLabel);
     renderForecast(forecast.data);
     renderForecastChart(forecast.data.days);
     renderCacheBadges({ current: current.cache, forecast: forecast.cache });
+
+    if (labelPromise) {
+      labelPromise
+        .then((label) => {
+          if (currentRequest === requestId && label) {
+            setCurrentPlaceLabel(label);
+          }
+        })
+        .catch(() => {
+          // Si falla la geocodificación inversa, queda el nombre de respaldo.
+        });
+    }
+
     return current.data;
   } catch (error) {
     if (currentRequest !== requestId) {
@@ -105,10 +137,12 @@ function refreshChatAnchors() {
  * @param {{ session_id: string, lat: number, lon: number, label?: string | null }} anchor
  */
 async function resumeFromAnchor(anchor) {
+  const savedLabel = usablePlaceLabel(anchor.label);
+  const labelPromise = savedLabel ? null : reverseGeocode(anchor.lat, anchor.lon);
   const location = {
     lat: anchor.lat,
     lon: anchor.lon,
-    label: anchor.label ?? null,
+    label: savedLabel ?? 'Lugar seleccionado',
   };
   const queryKey = `coords:${anchor.lat},${anchor.lon}`;
 
@@ -124,6 +158,8 @@ async function resumeFromAnchor(anchor) {
   const current = await loadWeather(
     getCurrentWeather(anchor.lat, anchor.lon),
     getForecast(anchor.lat, anchor.lon),
+    labelPromise,
+    savedLabel ?? 'Lugar seleccionado',
   );
 
   if (!current) {
@@ -133,16 +169,25 @@ async function resumeFromAnchor(anchor) {
     return;
   }
 
+  const label = labelPromise ? await labelPromise.catch(() => null) : savedLabel;
+  if (lastQueryKey !== queryKey) {
+    return;
+  }
+  const placeLabel =
+    usablePlaceLabel(label) ??
+    usablePlaceLabel(current.location) ??
+    'Lugar seleccionado';
+
   currentLocation = {
     lat: anchor.lat,
     lon: anchor.lon,
-    label: current.location,
+    label: placeLabel,
   };
   setChatLocation(currentLocation);
   saveLastLocation({
     lat: anchor.lat,
     lon: anchor.lon,
-    label: current.location,
+    label: placeLabel,
     zoom: getZoom(),
   });
 }
@@ -150,6 +195,7 @@ async function resumeFromAnchor(anchor) {
 initTheme();
 initChat({
   openPopup: openChatPopup,
+  closePopup: closeChatPopup,
   onAnchorsChanged: refreshChatAnchors,
 });
 const initialTheme = document.documentElement.dataset.theme;
@@ -167,10 +213,16 @@ initMap(async (lat, lon) => {
   lastQueryKey = queryKey;
 
   setSelectedCoords(lat, lon);
-  currentLocation = { lat, lon, label: null };
+  const labelPromise = reverseGeocode(lat, lon);
+  currentLocation = { lat, lon, label: 'Lugar seleccionado' };
   setChatLocation(currentLocation);
 
-  const current = await loadWeather(getCurrentWeather(lat, lon), getForecast(lat, lon));
+  const current = await loadWeather(
+    getCurrentWeather(lat, lon),
+    getForecast(lat, lon),
+    labelPromise,
+    'Lugar seleccionado',
+  );
 
   if (!current) {
     if (lastQueryKey === queryKey) {
@@ -179,9 +231,18 @@ initMap(async (lat, lon) => {
     return;
   }
 
-  currentLocation = { lat, lon, label: current.location };
+  const label = await labelPromise.catch(() => null);
+  if (lastQueryKey !== queryKey) {
+    return;
+  }
+  const placeLabel =
+    usablePlaceLabel(label) ??
+    usablePlaceLabel(current.location) ??
+    'Lugar seleccionado';
+
+  currentLocation = { lat, lon, label: placeLabel };
   setChatLocation(currentLocation);
-  saveLastLocation({ lat, lon, label: current.location, zoom: getZoom() });
+  saveLastLocation({ lat, lon, label: placeLabel, zoom: getZoom() });
 }, initialTheme);
 
 refreshChatAnchors();
@@ -191,7 +252,7 @@ searchForm.addEventListener('submit', async (event) => {
 
   const city = formatPlaceName(searchInput.value);
   if (!city) {
-    showError('Escribí el nombre de una ciudad para buscar.');
+    showError('Escribí el nombre de un lugar para buscar.');
     return;
   }
   searchInput.value = city; // Muestra el texto normalizado en el input.
@@ -214,13 +275,20 @@ searchForm.addEventListener('submit', async (event) => {
       return;
     }
 
+    const placeLabel = usablePlaceLabel(place.label) ?? formatPlaceName(city);
+
     centerOn(place.lat, place.lon, CITY_ZOOM);
     placeMarker(place.lat, place.lon);
     setSelectedCoords(place.lat, place.lon);
-    currentLocation = { lat: place.lat, lon: place.lon, label: city };
+    currentLocation = { lat: place.lat, lon: place.lon, label: placeLabel };
     setChatLocation(currentLocation);
 
-    const current = await loadWeather(getCurrentWeatherByCity(city), getForecastByCity(city));
+    const current = await loadWeather(
+      getCurrentWeatherByCity(city),
+      getForecastByCity(city),
+      null,
+      placeLabel,
+    );
     if (!current) {
       if (lastQueryKey === queryKey) {
         lastQueryKey = null;
@@ -228,9 +296,14 @@ searchForm.addEventListener('submit', async (event) => {
       return;
     }
 
-    currentLocation = { lat: place.lat, lon: place.lon, label: current.location };
+    currentLocation = { lat: place.lat, lon: place.lon, label: placeLabel };
     setChatLocation(currentLocation);
-    saveLastLocation({ lat: place.lat, lon: place.lon, label: current.location, zoom: CITY_ZOOM });
+    saveLastLocation({
+      lat: place.lat,
+      lon: place.lon,
+      label: placeLabel,
+      zoom: CITY_ZOOM,
+    });
   } catch (error) {
     if (lastQueryKey === queryKey) {
       lastQueryKey = null;
@@ -248,22 +321,44 @@ async function restoreLastLocation() {
     return;
   }
 
+  const savedLabel = usablePlaceLabel(saved.label);
+  const labelPromise = savedLabel ? null : reverseGeocode(saved.lat, saved.lon);
+  const fallbackLabel = savedLabel ?? 'Lugar seleccionado';
+  const restoreQueryKey = `coords:${saved.lat},${saved.lon}`;
+
   centerOn(saved.lat, saved.lon, saved.zoom);
   placeMarker(saved.lat, saved.lon);
   setSelectedCoords(saved.lat, saved.lon);
-  currentLocation = { lat: saved.lat, lon: saved.lon, label: saved.label ?? null };
+  currentLocation = { lat: saved.lat, lon: saved.lon, label: fallbackLabel };
   setChatLocation(currentLocation);
 
   const current = await loadWeather(
     getCurrentWeather(saved.lat, saved.lon),
     getForecast(saved.lat, saved.lon),
+    labelPromise,
+    fallbackLabel,
   );
 
   if (current) {
-    currentLocation = { lat: saved.lat, lon: saved.lon, label: current.location };
+    const label = labelPromise ? await labelPromise.catch(() => null) : savedLabel;
+    if (lastQueryKey && lastQueryKey !== restoreQueryKey) {
+      return;
+    }
+    const placeLabel =
+      usablePlaceLabel(label) ??
+      usablePlaceLabel(current.location) ??
+      fallbackLabel;
+
+    currentLocation = { lat: saved.lat, lon: saved.lon, label: placeLabel };
     setChatLocation(currentLocation);
+    saveLastLocation({
+      lat: saved.lat,
+      lon: saved.lon,
+      label: placeLabel,
+      zoom: saved.zoom,
+    });
     // Evita repetir la consulta si el primer clic cae en la misma celda.
-    lastQueryKey = `coords:${saved.lat},${saved.lon}`;
+    lastQueryKey = restoreQueryKey;
   }
 }
 

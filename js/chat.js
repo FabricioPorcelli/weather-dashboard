@@ -15,6 +15,7 @@ import {
   loadUserId,
   saveChatAnchor,
 } from './storage.js';
+import { isCoordinateLabel } from './text.js';
 
 const TOOL_LABELS = {
   get_current_weather: 'Consultando el clima actual…',
@@ -74,24 +75,37 @@ let elements = null;
 /** @type {((panel: HTMLElement) => boolean) | null} Abre el popup en el mapa. */
 let openPopup = null;
 
+/** @type {(() => void) | null} Cierra el popup del mapa. */
+let closePopup = null;
+
 /** @type {(() => void) | null} Avisa que cambiaron los puntos guardados. */
 let onAnchorsChanged = null;
+
+/** Detecta el layout móvil para usar el chat a pantalla completa. */
+const MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
 
 /**
  * Inicializa el formulario y el botón que abre la ventana emergente.
  *
- * @param {{ openPopup?: (panel: HTMLElement) => boolean, onAnchorsChanged?: () => void }} [options]
+ * @param {{
+ *   openPopup?: (panel: HTMLElement) => boolean,
+ *   closePopup?: () => void,
+ *   onAnchorsChanged?: () => void,
+ * }} [options]
  */
 export function initChat({
   openPopup: openPopupCallback,
+  closePopup: closePopupCallback,
   onAnchorsChanged: anchorsChangedCallback,
 } = {}) {
   openPopup = openPopupCallback ?? null;
+  closePopup = closePopupCallback ?? null;
   onAnchorsChanged = anchorsChangedCallback ?? null;
   userId = loadUserId();
   elements = {
     panel: document.querySelector('#chat-panel'),
     open: document.querySelector('#chat-open'),
+    close: document.querySelector('#chat-close'),
     form: document.querySelector('#chat-form'),
     input: document.querySelector('#chat-input'),
     send: document.querySelector('#chat-send'),
@@ -109,6 +123,14 @@ export function initChat({
   });
 
   elements.open.addEventListener('click', openChatWindow);
+  elements.close?.addEventListener('click', closeChatWindow);
+  document.addEventListener('keydown', handleChatKeydown);
+  window.addEventListener('resize', handleViewportChange);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', handleViewportChange);
+    window.visualViewport.addEventListener('scroll', handleViewportChange);
+  }
+  MOBILE_QUERY.addEventListener('change', handleMobileChange);
   updateLocationLabel();
   elements.open.hidden = !currentLocation;
 }
@@ -128,7 +150,6 @@ export function setChatLocation(location) {
     return;
   }
 
-  let wasReset = false;
   if (
     sessionId &&
     conversationLocation &&
@@ -136,7 +157,6 @@ export function setChatLocation(location) {
   ) {
     rememberAnchor();
     resetConversation();
-    wasReset = true;
   }
 
   const savedAnchor = findAnchorForLocation(location);
@@ -168,11 +188,6 @@ export function setChatLocation(location) {
   if (elements) {
     updateLocationLabel();
     elements.open.hidden = false;
-    if (wasReset) {
-      showStatus(
-        'Nueva ubicación: la conversación anterior quedó guardada en el mapa.',
-      );
-    }
   }
 }
 
@@ -206,16 +221,114 @@ export function resumeConversation(anchor) {
  * Abre el panel del chat como popup anclado al marcador.
  */
 export function openChatWindow() {
-  if (!elements || !currentLocation || !openPopup) {
+  if (!elements || !currentLocation) {
     return;
   }
 
   elements.panel.hidden = false;
-  if (!openPopup(elements.panel)) {
+  if (MOBILE_QUERY.matches) {
+    openMobileChat();
+  } else if (!openPopup || !openPopup(elements.panel)) {
     elements.panel.hidden = true;
     return;
   }
-  elements.input.focus();
+
+  elements.input.focus({ preventScroll: true });
+  syncMobileViewport();
+  requestAnimationFrame(scrollMessages);
+}
+
+/**
+ * Abre el chat como una hoja a pantalla completa en móvil.
+ * Se desacopla del popup de Leaflet para que el teclado no lo tape.
+ */
+function openMobileChat() {
+  closePopup?.();
+  if (elements.panel.parentElement !== document.body) {
+    document.body.append(elements.panel);
+  }
+  elements.panel.classList.add('chat-panel--mobile');
+  elements.panel.setAttribute('role', 'dialog');
+  elements.panel.setAttribute('aria-modal', 'true');
+  document.body.classList.add('chat-open');
+  syncMobileViewport();
+}
+
+/**
+ * Cierra el chat móvil y limpia el estado del overlay.
+ */
+export function closeChatWindow() {
+  if (!elements) {
+    return;
+  }
+
+  elements.panel.classList.remove('chat-panel--mobile');
+  elements.panel.hidden = true;
+  elements.panel.removeAttribute('role');
+  elements.panel.removeAttribute('aria-modal');
+  elements.panel.style.removeProperty('--chat-vv-height');
+  elements.panel.style.removeProperty('--chat-vv-top');
+  document.body.classList.remove('chat-open');
+  closePopup?.();
+  elements.open?.focus({ preventScroll: true });
+}
+
+/**
+ * Ajusta el chat móvil al viewport visible, que se achica al abrir el teclado.
+ */
+function syncMobileViewport() {
+  if (!elements?.panel.classList.contains('chat-panel--mobile')) {
+    return;
+  }
+
+  const viewport = window.visualViewport;
+  const height = viewport?.height ?? window.innerHeight;
+  const top = viewport?.offsetTop ?? 0;
+  elements.panel.style.setProperty('--chat-vv-height', `${Math.round(height)}px`);
+  elements.panel.style.setProperty('--chat-vv-top', `${Math.round(top)}px`);
+}
+
+/**
+ * Recalcula el viewport y mantiene visible el final de la conversación.
+ */
+function handleViewportChange() {
+  syncMobileViewport();
+  if (elements?.panel.classList.contains('chat-panel--mobile')) {
+    requestAnimationFrame(scrollMessages);
+  }
+}
+
+/**
+ * Pasa de popup a pantalla completa (o al revés) al cambiar el breakpoint.
+ *
+ * @param {MediaQueryListEvent} event
+ */
+function handleMobileChange(event) {
+  if (!elements) {
+    return;
+  }
+
+  if (event.matches && !elements.panel.hidden) {
+    openMobileChat();
+    elements.input.focus({ preventScroll: true });
+    requestAnimationFrame(scrollMessages);
+  } else if (!event.matches) {
+    closeChatWindow();
+  }
+}
+
+/**
+ * Cierra el chat móvil con Escape.
+ *
+ * @param {KeyboardEvent} event
+ */
+function handleChatKeydown(event) {
+  if (
+    event.key === 'Escape' &&
+    elements?.panel.classList.contains('chat-panel--mobile')
+  ) {
+    closeChatWindow();
+  }
 }
 
 /**
@@ -847,8 +960,9 @@ function updateLocationLabel() {
     return;
   }
   const label =
-    currentLocation.label ??
-    `${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`;
+    currentLocation.label && !isCoordinateLabel(currentLocation.label)
+      ? currentLocation.label
+      : 'Lugar seleccionado';
   elements.location.textContent = `Ubicación: ${label}`;
 }
 

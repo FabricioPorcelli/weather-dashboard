@@ -137,6 +137,16 @@ export function openChatPopup(element) {
 }
 
 /**
+ * Cierra el popup del chat si está abierto.
+ * Se usa cuando el chat pasa al modo móvil a pantalla completa.
+ */
+export function closeChatPopup() {
+  if (marker?.getPopup()?.isOpen()) {
+    marker.closePopup();
+  }
+}
+
+/**
  * Ajusta el mapa hasta que el popup del chat quede centrado verticalmente.
  * Se corrige en pasos cortos porque el alto del popup depende del contenido.
  */
