@@ -268,10 +268,18 @@ body {
   transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.panel__theme:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
-  transform: rotate(8deg);
+.panel__theme:active {
+  transform: scale(0.96);
+}
+
+/* En táctil el hover puede quedar “pegado” después del toque; la rotación
+   se reserva para dispositivos con puntero fino. */
+@media (hover: hover) and (pointer: fine) {
+  .panel__theme:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    transform: rotate(8deg);
+  }
 }
 
 .icon {
