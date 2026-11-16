@@ -10,12 +10,14 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 
 - Mapa Leaflet a pantalla completa con tiles de OpenStreetMap y apariencia oscura.
 - **Clic en el mapa**: clima actual + pronóstico de 5 días, pedidos en paralelo.
-- **Búsqueda por ciudad** con geocodificación (Nominatim) y recentrado del mapa.
+- **Búsqueda por ciudad o pueblo** con geocodificación (Nominatim) y recentrado del mapa.
+- **Nombre del lugar** al hacer clic en el mapa, obtenido con geocodificación inversa.
 - Tarjeta con temperatura, sensación térmica, humedad, viento, precipitación y condiciones.
 - Gráfico de temperaturas máximas/mínimas (Chart.js) y listado diario con probabilidad de lluvia.
 - Tema claro/oscuro (guardado en `localStorage`) que también ajusta el mapa y el gráfico.
 - Restauración de la última ubicación y el zoom al abrir.
-- Badges de `X-Cache` (HIT/MISS) para ver la caché de la API en acción.
+- Diseño adaptable a escritorio y móvil, con chat a pantalla completa en celular.
+- La API sigue exponiendo `X-Cache`, pero el dashboard no muestra esos badges.
 - Estados de carga y errores claros: 404, 422, 429, 502, 504 y API caída.
 - **Asistente conversacional opcional** en una ventana emergente anclada al punto
   del mapa, con streaming SSE y respuestas en lenguaje natural. Muestra el nivel
@@ -28,7 +30,7 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 
 - HTML, CSS y JavaScript vanilla con **ES Modules**.
 - [Leaflet 1.9.4](https://leafletjs.com/) (mapa) y [Chart.js 4.4.7](https://www.chartjs.org/) (gráfico), por CDN.
-- [Nominatim](https://nominatim.org/) (OpenStreetMap) para convertir nombres de ciudades en coordenadas.
+- [Nominatim](https://nominatim.org/) (OpenStreetMap) para convertir nombres de lugares en coordenadas y coordenadas en un nombre corto.
 - [Weather API](https://github.com/FabricioPorcelli/weather-api) (FastAPI + Redis) como fuente de datos, corriendo en `localhost:8000`.
 - [Weather Assistant](https://github.com/FabricioPorcelli/weather-assistant) (FastAPI + PostgreSQL + LLM) como asistente opcional, corriendo en `localhost:8100`.
 
@@ -42,15 +44,19 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 - **Errores por código HTTP**: la UI traduce 404, 422, 429, 502, 504 y caída de
   la API a mensajes claros, y descarta respuestas viejas con un `requestId`.
 - **APIs públicas con respeto**: Nominatim se consulta solo con acción explícita
-  del usuario, con caché en memoria y espera de 1 req/s según su política.
+  del usuario (búsqueda o clic en el mapa), con caché en memoria y espera de
+  1 req/s según su política.
+- **Coordenadas solo internas**: el mapa y la API usan latitud/longitud, pero la
+  interfaz muestra el nombre del lugar. Los badges de caché quedan en el código
+  como herramienta de diagnóstico, ocultos para el usuario final.
 - **Separación por módulos**: `api`, `geocode`, `map`, `chart`, `ui`, `storage`,
   `chat` y `main` con una única dirección de dependencias; la UI no conoce
   detalles de HTTP.
-- **Asistente opcional**: el chat se abre desde “Preguntar sobre este lugar” en
-  un popup de Leaflet anclado al marcador. Al abrirlo, el mapa se desplaza para
-  centrar el popup en el área visible (sin el panel lateral) y que no quede
-  cortado por arriba. Sus errores quedan contenidos ahí; el clima sigue
-  funcionando aunque el asistente esté apagado o sin LLM configurado.
+- **Asistente opcional**: en escritorio el chat se abre desde “Preguntar sobre
+  este lugar” en un popup de Leaflet anclado al marcador. En móvil ocupa la
+  pantalla completa y se ajusta al viewport visible cuando aparece el teclado.
+  Sus errores quedan contenidos ahí; el clima sigue funcionando aunque el
+  asistente esté apagado o sin LLM configurado.
 - **SSE con fetch + ReadableStream**: `EventSource` solo permite GET, así que el
   chat usa `fetch` por POST y lee el stream manualmente.
 - **Solo lenguaje natural**: no se muestran tarjetas con argumentos internos de
