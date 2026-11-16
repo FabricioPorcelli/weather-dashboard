@@ -458,3 +458,211 @@ function applyTheme(theme) {
 function systemTheme() {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
+
+/** Alto del panel colapsado: handle + ubicación + condiciones + temperatura. */
+const COLLAPSED_PANEL_HEIGHT = 148;
+
+/**
+ * Activa la hoja inferior móvil: arrastre desde el handle y toque para
+ * colapsar/expandir. En escritorio el handle queda oculto y no hace nada.
+ */
+export function initPanelSheet() {
+  const panel = document.querySelector('.panel');
+  const handle = document.querySelector('#panel-handle');
+  if (!panel || !handle) {
+    return;
+  }
+
+  const mobileQuery = window.matchMedia('(max-width: 640px)');
+  const collapsibleParts = panel.querySelectorAll(
+    '.panel__collapsible, .card__extra',
+  );
+  let collapsed = false;
+  let dragging = false;
+  let moved = false;
+  let suppressClick = false;
+  let startY = 0;
+  let startHeight = 0;
+  let pointerId = null;
+
+  const canCollapse = () => {
+    const card = document.querySelector('#current-card');
+    return Boolean(card && !card.hidden);
+  };
+
+  const expandedHeight = () => Math.min(window.innerHeight * 0.68, 620);
+
+  const updateHandle = () => {
+    handle.setAttribute('aria-expanded', String(!collapsed));
+    handle.setAttribute(
+      'aria-label',
+      collapsed ? 'Expandir panel' : 'Colapsar panel',
+    );
+    handle.title = collapsed ? 'Expandir panel' : 'Colapsar panel';
+  };
+
+  const setCollapsed = (next) => {
+    if (next && !canCollapse()) {
+      return;
+    }
+
+    collapsed = next;
+    panel.classList.toggle('panel--collapsed', collapsed);
+    panel.classList.remove('panel--dragging');
+    panel.style.height = mobileQuery.matches
+      ? `${collapsed ? COLLAPSED_PANEL_HEIGHT : expandedHeight()}px`
+      : '';
+    collapsibleParts.forEach((part) => {
+      part.inert = collapsed;
+    });
+    updateHandle();
+  };
+
+  const resetDrag = () => {
+    dragging = false;
+    pointerId = null;
+    panel.classList.remove('panel--dragging');
+  };
+
+  /**
+   * @param {PointerEvent} event
+   */
+  const onPointerDown = (event) => {
+    if (!mobileQuery.matches || !canCollapse()) {
+      return;
+    }
+    if (event.button !== undefined && event.button !== 0) {
+      return;
+    }
+
+    dragging = true;
+    moved = false;
+    suppressClick = false;
+    startY = event.clientY;
+    startHeight = panel.getBoundingClientRect().height;
+    pointerId = event.pointerId;
+
+    if (collapsed) {
+      panel.classList.remove('panel--collapsed');
+    }
+    panel.classList.add('panel--dragging');
+    panel.style.height = `${startHeight}px`;
+    try {
+      handle.setPointerCapture?.(event.pointerId);
+    } catch {
+      // Algunos navegadores no permiten capturar un puntero sintético.
+    }
+  };
+
+  /**
+   * @param {PointerEvent} event
+   */
+  const onPointerMove = (event) => {
+    if (!dragging || event.pointerId !== pointerId) {
+      return;
+    }
+
+    const delta = startY - event.clientY;
+    if (Math.abs(delta) > 6) {
+      moved = true;
+    }
+
+    const nextHeight = Math.min(
+      Math.max(startHeight + delta, COLLAPSED_PANEL_HEIGHT),
+      expandedHeight(),
+    );
+    panel.style.height = `${nextHeight}px`;
+  };
+
+  /**
+   * @param {PointerEvent} event
+   * @param {boolean} cancelled
+   */
+  const finishDrag = (event, cancelled) => {
+    if (!dragging || event.pointerId !== pointerId) {
+      return;
+    }
+
+    try {
+      if (handle.hasPointerCapture?.(event.pointerId)) {
+        handle.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      // El puntero ya pudo haberse liberado.
+    }
+
+    const currentHeight = panel.getBoundingClientRect().height;
+    resetDrag();
+
+    if (cancelled) {
+      setCollapsed(collapsed);
+      return;
+    }
+
+    if (!moved) {
+      // Un toque sin desplazamiento deja que el click haga el toggle.
+      panel.classList.toggle('panel--collapsed', collapsed);
+      panel.style.height = `${
+        collapsed ? COLLAPSED_PANEL_HEIGHT : expandedHeight()
+      }px`;
+      return;
+    }
+
+    const shouldCollapse =
+      currentHeight < (COLLAPSED_PANEL_HEIGHT + expandedHeight()) / 2;
+    suppressClick = true;
+    window.setTimeout(() => {
+      suppressClick = false;
+    }, 350);
+    setCollapsed(shouldCollapse);
+  };
+
+  const onPointerUp = (event) => finishDrag(event, false);
+  const onPointerCancel = (event) => finishDrag(event, true);
+
+  const onClick = () => {
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
+    if (!mobileQuery.matches || !canCollapse()) {
+      return;
+    }
+    setCollapsed(!collapsed);
+  };
+
+  /**
+   * @param {MediaQueryListEvent} event
+   */
+  const onMobileChange = (event) => {
+    if (!event.matches) {
+      collapsed = false;
+      panel.classList.remove('panel--collapsed', 'panel--dragging');
+      panel.style.height = '';
+      collapsibleParts.forEach((part) => {
+        part.inert = false;
+      });
+      updateHandle();
+      return;
+    }
+
+    panel.style.height = collapsed ? `${COLLAPSED_PANEL_HEIGHT}px` : '';
+    updateHandle();
+  };
+
+  const onResize = () => {
+    if (!mobileQuery.matches || dragging) {
+      return;
+    }
+    panel.style.height = collapsed ? `${COLLAPSED_PANEL_HEIGHT}px` : '';
+  };
+
+  handle.addEventListener('pointerdown', onPointerDown);
+  handle.addEventListener('pointermove', onPointerMove);
+  handle.addEventListener('pointerup', onPointerUp);
+  handle.addEventListener('pointercancel', onPointerCancel);
+  handle.addEventListener('click', onClick);
+  mobileQuery.addEventListener('change', onMobileChange);
+  window.addEventListener('resize', onResize);
+  updateHandle();
+}

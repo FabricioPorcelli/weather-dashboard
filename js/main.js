@@ -37,6 +37,7 @@ import {
 } from './storage.js';
 import { formatPlaceName, isCoordinateLabel } from './text.js';
 import {
+  initPanelSheet,
   initTheme,
   renderCacheBadges,
   renderCurrentWeather,
@@ -191,6 +192,7 @@ async function resumeFromAnchor(anchor) {
 }
 
 initTheme();
+initPanelSheet();
 initChat({
   openPopup: openChatPopup,
   closePopup: closeChatPopup,

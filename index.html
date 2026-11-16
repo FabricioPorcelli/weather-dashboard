@@ -46,8 +46,20 @@
 
   <!-- Panel lateral: resumen de la ubicación elegida -->
   <aside class="panel">
-    <header class="panel__header">
-      <div class="panel__brand">
+    <button
+      class="panel__handle"
+      id="panel-handle"
+      type="button"
+      aria-label="Colapsar panel"
+      aria-expanded="true"
+    >
+      <span class="panel__handle-grip" aria-hidden="true"></span>
+    </button>
+
+    <div class="panel__collapsible">
+      <div class="panel__collapsible-inner">
+        <header class="panel__header">
+          <div class="panel__brand">
         <h1 class="panel__title">Clima</h1>
         <p class="panel__tagline">Pronóstico y consejos para donde estés</p>
       </div>
@@ -109,9 +121,11 @@
     <p class="panel__coords" id="coords" hidden aria-hidden="true"></p>
 
     <!-- Estado de caché de la API: se conserva en el código, pero no se muestra. -->
-    <div class="cache" id="cache-badges" hidden aria-hidden="true">
-      <span class="cache__badge" id="cache-current"></span>
-      <span class="cache__badge" id="cache-forecast"></span>
+        <div class="cache" id="cache-badges" hidden aria-hidden="true">
+          <span class="cache__badge" id="cache-current"></span>
+          <span class="cache__badge" id="cache-forecast"></span>
+        </div>
+      </div>
     </div>
 
     <!-- Tarjeta de clima actual: se muestra cuando la API responde -->
@@ -125,41 +139,49 @@
           <span id="current-temp"></span><span class="card__unit">°C</span>
         </p>
       </div>
-      <dl class="card__details">
-        <div>
-          <dt>Sensación</dt>
-          <dd id="current-feels-like"></dd>
+      <div class="card__extra">
+        <div class="card__extra-inner">
+          <dl class="card__details">
+            <div>
+              <dt>Sensación</dt>
+              <dd id="current-feels-like"></dd>
+            </div>
+            <div>
+              <dt>Humedad</dt>
+              <dd id="current-humidity"></dd>
+            </div>
+            <div>
+              <dt>Viento</dt>
+              <dd id="current-wind"></dd>
+            </div>
+            <div>
+              <dt>Precipitación</dt>
+              <dd id="current-precip"></dd>
+            </div>
+          </dl>
+          <p class="card__updated" id="current-updated"></p>
         </div>
-        <div>
-          <dt>Humedad</dt>
-          <dd id="current-humidity"></dd>
-        </div>
-        <div>
-          <dt>Viento</dt>
-          <dd id="current-wind"></dd>
-        </div>
-        <div>
-          <dt>Precipitación</dt>
-          <dd id="current-precip"></dd>
-        </div>
-      </dl>
-      <p class="card__updated" id="current-updated"></p>
+      </div>
     </section>
 
-    <!-- Abre el chat como ventana emergente sobre el marcador del mapa. -->
-    <button class="chat-open" id="chat-open" type="button" hidden>
-      Preguntar sobre este lugar
-    </button>
+    <div class="panel__collapsible panel__collapsible--bottom">
+      <div class="panel__collapsible-inner">
+        <!-- Abre el chat como ventana emergente sobre el marcador del mapa. -->
+        <button class="chat-open" id="chat-open" type="button" hidden>
+          Preguntar sobre este lugar
+        </button>
 
-    <!-- Pronóstico: tira de 5 días con barras de rango de temperatura -->
-    <section class="card card--forecast" id="forecast-card" hidden>
-      <h2 class="card__title">Próximos 5 días</h2>
-      <ul
-        class="forecast"
-        id="forecast-days"
-        aria-label="Pronóstico de los próximos días"
-      ></ul>
-    </section>
+        <!-- Pronóstico: tira de 5 días con barras de rango de temperatura -->
+        <section class="card card--forecast" id="forecast-card" hidden>
+          <h2 class="card__title">Próximos 5 días</h2>
+          <ul
+            class="forecast"
+            id="forecast-days"
+            aria-label="Pronóstico de los próximos días"
+          ></ul>
+        </section>
+      </div>
+    </div>
 
   </aside>
 

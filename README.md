@@ -17,6 +17,8 @@ Dashboard web estático que muestra el clima actual y el pronóstico de 5 días 
 - Tema claro/oscuro (guardado en `localStorage`) que también ajusta el mapa.
 - Restauración de la última ubicación y el zoom al abrir.
 - Diseño adaptable a escritorio y móvil, con chat a pantalla completa en celular.
+- Panel móvil colapsable: arrastrá la barra superior hacia abajo para dejar solo
+  el resumen del clima y hacia arriba para recuperar el dashboard completo.
 - La API sigue exponiendo `X-Cache`, pero el dashboard no muestra esos badges.
 - Estados de carga y errores claros: 404, 422, 429, 502, 504 y API caída.
 - **Asistente conversacional opcional** en una ventana emergente anclada al punto
