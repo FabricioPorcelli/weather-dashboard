@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Weather Dashboard</title>
   <meta
     name="description"
@@ -41,7 +41,10 @@
   <!-- Panel lateral: resumen de la ubicación elegida -->
   <aside class="panel">
     <header class="panel__header">
-      <h1 class="panel__title">Clima</h1>
+      <div class="panel__brand">
+        <h1 class="panel__title">Clima</h1>
+        <p class="panel__tagline">Pronóstico y consejos para donde estés</p>
+      </div>
       <button class="panel__theme" id="theme-toggle" type="button" aria-label="Cambiar tema">
         <!-- Iconos de sol y luna: el CSS muestra el que corresponde al tema -->
         <svg
@@ -90,33 +93,32 @@
         id="search-input"
         type="search"
         name="city"
-        placeholder="Buscar ciudad (ej. Madrid)"
-        aria-label="Nombre de la ciudad"
+        placeholder="Buscar ciudad o pueblo"
+        aria-label="Nombre de la ciudad o pueblo"
       >
       <button class="search__button" type="submit">Buscar</button>
     </form>
 
-    <p class="panel__hint" id="status" aria-live="polite">Hacé clic en el mapa o buscá una ciudad.</p>
-    <p class="panel__coords" id="coords"></p>
+    <p class="panel__hint" id="status" aria-live="polite">Elegí un punto en el mapa o buscá una ciudad o pueblo.</p>
+    <p class="panel__coords" id="coords" hidden aria-hidden="true"></p>
 
-    <!-- Abre el chat como ventana emergente sobre el marcador del mapa. -->
-    <button class="chat-open" id="chat-open" type="button" hidden>
-      Preguntar sobre este lugar
-    </button>
-
-    <!-- Estado de caché de la API en la última consulta (HIT/MISS) -->
-    <div class="cache" id="cache-badges" hidden>
+    <!-- Estado de caché de la API: se conserva en el código, pero no se muestra. -->
+    <div class="cache" id="cache-badges" hidden aria-hidden="true">
       <span class="cache__badge" id="cache-current"></span>
       <span class="cache__badge" id="cache-forecast"></span>
     </div>
 
     <!-- Tarjeta de clima actual: se muestra cuando la API responde -->
-    <section class="card" id="current-card" hidden>
-      <h2 class="card__location" id="current-location"></h2>
-      <p class="card__temp">
-        <span id="current-temp"></span><span class="card__unit">°C</span>
-      </p>
-      <p class="card__conditions" id="current-conditions"></p>
+    <section class="card card--current" id="current-card" hidden>
+      <div class="card__hero">
+        <div class="card__hero-copy">
+          <h2 class="card__location" id="current-location"></h2>
+          <p class="card__conditions" id="current-conditions"></p>
+        </div>
+        <p class="card__temp">
+          <span id="current-temp"></span><span class="card__unit">°C</span>
+        </p>
+      </div>
       <dl class="card__details">
         <div>
           <dt>Sensación</dt>
@@ -138,8 +140,13 @@
       <p class="card__updated" id="current-updated"></p>
     </section>
 
+    <!-- Abre el chat como ventana emergente sobre el marcador del mapa. -->
+    <button class="chat-open" id="chat-open" type="button" hidden>
+      Preguntar sobre este lugar
+    </button>
+
     <!-- Pronóstico: gráfico de temperaturas y lista de días -->
-    <section class="card" id="forecast-card" hidden>
+    <section class="card card--forecast" id="forecast-card" hidden>
       <h2 class="card__title">Próximos días</h2>
       <div class="chart">
         <canvas
@@ -157,6 +164,9 @@
   <section class="chat-panel" id="chat-panel" hidden aria-label="Preguntas sobre el clima">
     <div class="chat__header">
       <h2 class="chat__title">Pregunta sobre el clima</h2>
+      <button class="chat__close" id="chat-close" type="button" aria-label="Cerrar chat">
+        ×
+      </button>
     </div>
     <p class="chat__location" id="chat-location">Sin ubicación seleccionada.</p>
 
@@ -178,6 +188,7 @@
         maxlength="500"
         placeholder="Preguntá sobre el clima…"
         aria-label="Mensaje para el asistente"
+        enterkeyhint="send"
       >
       <button class="chat__send" id="chat-send" type="submit">Enviar</button>
     </form>

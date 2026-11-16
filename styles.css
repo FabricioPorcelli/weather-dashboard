@@ -1,7 +1,7 @@
 /* ==========================================================================
    Weather Dashboard — estilos
-   Mapa a pantalla completa + panel lateral flotante, con temas claro/oscuro
-   a través de variables CSS.
+   Mapa a pantalla completa + panel flotante (hoja inferior en móvil), con
+   temas claro/oscuro a través de variables CSS.
    ========================================================================== */
 
 :root {
@@ -15,8 +15,10 @@
   --color-warm: #fb923c;
   --color-danger: #f87171;
   --color-hit: #4ade80;
-  --panel-width: 340px;
-  --radius: 14px;
+  --color-surface: rgba(148, 163, 184, 0.08);
+  --color-surface-strong: rgba(148, 163, 184, 0.14);
+  --panel-width: 360px;
+  --radius: 18px;
   color-scheme: dark;
 }
 
@@ -33,6 +35,8 @@
   --color-warm: #ea580c;
   --color-danger: #dc2626;
   --color-hit: #16a34a;
+  --color-surface: rgba(15, 23, 42, 0.04);
+  --color-surface-strong: rgba(15, 23, 42, 0.08);
   color-scheme: light;
 }
 
@@ -92,13 +96,13 @@ body {
   right: 16px;
   bottom: 16px;
   width: var(--panel-width);
-  padding: 20px;
+  padding: 22px;
   overflow-y: auto;
   background: var(--color-panel);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(6px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(10px);
   /* Leaflet usa z-index 1000 en sus controles; el panel va al mismo nivel
      y, al estar después en el DOM, se dibuja por encima. */
   z-index: 1000;
@@ -106,31 +110,50 @@ body {
 
 .panel__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 14px;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.panel__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
 .panel__title {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+
+.panel__tagline {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 .panel__theme {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
   color: var(--color-text);
-  background: rgba(148, 163, 184, 0.12);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
 }
 
 .panel__theme:hover {
-  filter: brightness(1.15);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .icon {
@@ -157,27 +180,38 @@ body {
 .panel__hint {
   margin: 0 0 12px;
   color: var(--color-muted);
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.panel__hint:empty {
+  display: none;
 }
 
 .panel__hint--error {
   color: var(--color-danger);
 }
 
+/* Se conserva en el DOM y en el código, pero no se muestra al usuario. */
 .panel__coords {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: var(--color-accent);
-  font-size: 0.95rem;
+  display: none;
 }
 
 /* --- Búsqueda por ciudad -------------------------------------------------- */
 
 .search {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin: 0 0 14px;
+  padding: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.search:focus-within {
+  border-color: var(--color-accent);
 }
 
 .search__input {
@@ -185,8 +219,8 @@ body {
   min-width: 0;
   padding: 8px 10px;
   color: var(--color-text);
-  background: rgba(148, 163, 184, 0.08);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border: 0;
   border-radius: 8px;
   font: inherit;
   font-size: 0.9rem;
@@ -197,30 +231,31 @@ body {
 }
 
 .search__input:focus {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 1px;
+  outline: none;
 }
 
 .search__button {
+  min-height: 38px;
   padding: 8px 14px;
   color: var(--color-on-accent);
   background: var(--color-accent);
   border: none;
   border-radius: 8px;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
+  transition: filter 0.2s ease;
 }
 
 .search__button:hover {
   filter: brightness(1.1);
 }
 
-/* --- Badges de caché ------------------------------------------------------ */
+/* --- Badges de caché: se conservan ocultos -------------------------------- */
 
 .cache {
-  display: flex;
+  display: none;
   gap: 6px;
   margin: 10px 0 0;
 }
@@ -250,68 +285,104 @@ body {
   margin-top: 18px;
 }
 
+.card--current {
+  padding: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+}
+
+.card__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.card__hero-copy {
+  min-width: 0;
+}
+
 .card__location {
-  margin: 0 0 4px;
-  font-size: 1.05rem;
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
 }
 
 .card__temp {
   display: flex;
   align-items: flex-start;
   gap: 2px;
+  flex: 0 0 auto;
   margin: 0;
-  font-size: 3rem;
+  font-size: 3.2rem;
   font-weight: 700;
-  line-height: 1;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
   color: var(--color-accent);
+  white-space: nowrap;
 }
 
 .card__unit {
-  margin-top: 6px;
-  font-size: 1.2rem;
+  margin-top: 7px;
+  font-size: 1.1rem;
   font-weight: 500;
+  letter-spacing: 0;
 }
 
 .card__conditions {
-  margin: 6px 0 16px;
+  margin: 6px 0 0;
   color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.35;
 }
 
 .card__details {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px 16px;
-  margin: 0 0 16px;
+  gap: 12px 16px;
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
 }
 
 .card__details dt {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.045em;
   color: var(--color-muted);
 }
 
 .card__details dd {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .card__updated {
-  margin: 0;
-  font-size: 0.75rem;
+  margin: 12px 0 0;
+  font-size: 0.72rem;
   color: var(--color-muted);
 }
 
 /* --- Pronóstico ----------------------------------------------------------- */
 
+.card--forecast {
+  margin-top: 22px;
+}
+
 .card__title {
   margin: 0 0 12px;
-  font-size: 1.05rem;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
 }
 
 .chart {
   position: relative;
-  height: 200px;
+  height: 190px;
   margin-bottom: 16px;
 }
 
@@ -329,10 +400,15 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
-  background: rgba(148, 163, 184, 0.08);
+  padding: 11px 12px;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.day:hover {
+  border-color: var(--color-accent);
 }
 
 .day__info {
@@ -355,29 +431,35 @@ body {
 .day__temps {
   white-space: nowrap;
   font-size: 0.95rem;
+  font-weight: 600;
 }
 
 /* --- Asistente opcional -------------------------------------------------- */
 
 .chat-open {
   width: 100%;
-  margin: 12px 0 0;
-  padding: 9px 12px;
-  color: var(--color-on-accent);
+  min-height: 42px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  color: var(--color-text);
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
-  background: var(--color-accent);
-  border: 0;
-  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
   cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .chat-open:hover {
-  filter: brightness(1.1);
+  color: var(--color-accent);
+  background: var(--color-surface);
+  border-color: var(--color-accent);
 }
 
-/* El chat vive en un popup de Leaflet anclado al marcador. */
+/* En escritorio el chat vive en un popup de Leaflet; en móvil, en una hoja
+   a pantalla completa para que el teclado no lo tape. */
 .chat-panel {
   width: 100%;
   max-width: 440px;
@@ -612,14 +694,202 @@ body {
   opacity: 0.55;
 }
 
-/* En pantallas angostas el panel pasa a la parte inferior */
+/* --- Layout móvil ---------------------------------------------------------- */
+
+.chat__close {
+  display: none;
+}
+
+body.chat-open {
+  overflow: hidden;
+}
+
 @media (max-width: 640px) {
   .panel {
     top: auto;
-    left: 16px;
-    right: 16px;
-    bottom: 16px;
+    left: 8px;
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
     width: auto;
-    max-height: 45vh;
+    max-height: 55vh;
+    max-height: min(55dvh, 500px);
+    padding: 14px 16px;
+    background: var(--color-panel);
+    border-radius: 18px;
+    backdrop-filter: none;
+  }
+
+  /* Indicador visual de hoja inferior, sin agregar lógica de arrastre. */
+  .panel::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: -4px auto 10px;
+    background: var(--color-border);
+    border-radius: 999px;
+  }
+
+  .panel__header {
+    margin-bottom: 12px;
+  }
+
+  .panel__tagline {
+    display: none;
+  }
+
+  .panel__title {
+    font-size: 1.3rem;
+  }
+
+  .panel__theme {
+    width: 40px;
+    height: 40px;
+  }
+
+  .panel__hint {
+    font-size: 0.85rem;
+  }
+
+  .search {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .search__input {
+    padding: 10px 8px;
+    font-size: 16px;
+  }
+
+  .search__button {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  .card {
+    margin-top: 14px;
+  }
+
+  .card--current {
+    padding: 14px;
+  }
+
+  .card__hero {
+    gap: 10px;
+  }
+
+  .card__location {
+    font-size: 1.05rem;
+  }
+
+  .card__temp {
+    font-size: 2.6rem;
+  }
+
+  .card__conditions {
+    font-size: 0.85rem;
+  }
+
+  .card__details {
+    gap: 10px 12px;
+    padding-top: 12px;
+  }
+
+  .chart {
+    height: 150px;
+    margin-bottom: 12px;
+  }
+
+  .chat-open {
+    min-height: 44px;
+  }
+
+  /* Chat móvil: ocupa el viewport visible y deja el teclado arriba del input. */
+  .chat-panel--mobile {
+    position: fixed;
+    top: var(--chat-vv-top, 0);
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: var(--chat-vv-height, 100dvh);
+    max-height: var(--chat-vv-height, 100dvh);
+    margin: 0;
+    padding: max(10px, env(safe-area-inset-top)) 14px
+      max(10px, env(safe-area-inset-bottom));
+    background: var(--color-panel);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    z-index: 3000;
+  }
+
+  .chat-panel--mobile[hidden] {
+    display: none;
+  }
+
+  .chat-panel--mobile .chat__header {
+    flex: 0 0 auto;
+    margin-bottom: 2px;
+    padding-right: 0;
+  }
+
+  .chat-panel--mobile .chat__title {
+    font-size: 1.05rem;
+  }
+
+  .chat-panel--mobile .chat__location {
+    margin-bottom: 8px;
+  }
+
+  .chat-panel--mobile .chat__messages {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    margin-bottom: 8px;
+    padding-right: 0;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chat-panel--mobile .chat__bubble {
+    max-width: 88%;
+    font-size: 0.95rem;
+  }
+
+  .chat-panel--mobile .chat__status,
+  .chat-panel--mobile .chat__form {
+    flex: 0 0 auto;
+  }
+
+  .chat-panel--mobile .chat__input {
+    padding: 11px 12px;
+    font-size: 16px;
+  }
+
+  .chat-panel--mobile .chat__send {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  .chat__close {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    color: var(--color-muted);
+    font: inherit;
+    font-size: 1.6rem;
+    line-height: 1;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    cursor: pointer;
   }
 }
