@@ -57,6 +57,17 @@ test('permite colapsar y expandir el panel con las flechas del teclado', async (
   await expect(panel).not.toHaveClass(/panel--collapsed/);
 });
 
+test('muestra el pronóstico horario en la vista móvil', async ({ page }) => {
+  await page.goto('/');
+  await searchRosario(page);
+
+  await page.getByRole('tab', { name: 'Por hora' }).click();
+
+  await expect(page.locator('#forecast-hourly-panel')).toBeVisible();
+  await expect(page.locator('.hourly-hour')).toHaveCount(24);
+  await expect(page.locator('.hourly-group__label').first()).toHaveText('Hoy');
+});
+
 test('mantiene el foco dentro del chat móvil', async ({ page }) => {
   await page.goto('/');
   await searchRosario(page);

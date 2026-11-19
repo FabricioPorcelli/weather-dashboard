@@ -101,26 +101,31 @@ body {
 
 /* Scrollbar alineado con la paleta, en panel y conversación. */
 .panel,
-.chat__messages {
+.chat__messages,
+.hourly-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
 
 .panel::-webkit-scrollbar,
-.chat__messages::-webkit-scrollbar {
+.chat__messages::-webkit-scrollbar,
+.hourly-scroll::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .panel::-webkit-scrollbar-track,
 .chat__messages::-webkit-scrollbar-track,
+.hourly-scroll::-webkit-scrollbar-track,
 .panel::-webkit-scrollbar-corner,
-.chat__messages::-webkit-scrollbar-corner {
+.chat__messages::-webkit-scrollbar-corner,
+.hourly-scroll::-webkit-scrollbar-corner {
   background: transparent;
 }
 
 .panel::-webkit-scrollbar-thumb,
-.chat__messages::-webkit-scrollbar-thumb {
+.chat__messages::-webkit-scrollbar-thumb,
+.hourly-scroll::-webkit-scrollbar-thumb {
   background: var(--color-border);
   background-clip: padding-box;
   border: 2px solid transparent;
@@ -128,7 +133,8 @@ body {
 }
 
 .panel::-webkit-scrollbar-thumb:hover,
-.chat__messages::-webkit-scrollbar-thumb:hover {
+.chat__messages::-webkit-scrollbar-thumb:hover,
+.hourly-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent);
   background-clip: padding-box;
 }
@@ -620,10 +626,52 @@ body {
   margin-top: 22px;
 }
 
+.forecast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .card__title {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 1.08rem;
   letter-spacing: -0.01em;
+}
+
+.forecast-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+}
+
+.forecast-tab {
+  padding: 4px 8px;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.forecast-tab[aria-selected='true'] {
+  color: var(--color-text);
+  background: var(--color-bg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.forecast-tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
 .forecast {
@@ -776,6 +824,99 @@ body {
     opacity: 1;
     transform: scaleY(1);
   }
+}
+
+/* --- Pronóstico horario --------------------------------------------------- */
+
+.hourly-status {
+  margin: 0 0 8px;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.hourly-status--error {
+  color: var(--color-danger);
+}
+
+.hourly-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-snap-type: x proximity;
+}
+
+.hourly-group {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.hourly-group__label {
+  margin: 0 0 6px;
+  color: var(--color-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hourly-group__hours {
+  display: flex;
+  gap: 4px;
+}
+
+.hourly-hour {
+  min-width: 54px;
+  padding: 8px 4px 7px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  scroll-snap-align: start;
+}
+
+.hourly-hour--now {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+}
+
+.hourly-hour__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hourly-hour__time {
+  color: var(--color-text);
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.hourly-hour__temp {
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hourly-hour__rain {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-accent);
+  font-size: 0.58rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.hourly-hour .forecast-day__icon {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0;
 }
 
 /* --- Asistente opcional -------------------------------------------------- */

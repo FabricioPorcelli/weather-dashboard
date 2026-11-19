@@ -11,6 +11,8 @@ import {
   getCurrentWeatherByCity,
   getForecast,
   getForecastByCity,
+  getHourly,
+  getHourlyByCity,
 } from './api.js';
 import {
   initChat,
@@ -20,6 +22,7 @@ import {
 } from './chat.js';
 import {
   CITY_ZOOM,
+  COORD_DECIMALS,
   GEOLOCATION_COORD_DECIMALS,
 } from './config.js';
 import { geocodeCity, reverseGeocode } from './geocode.js';
@@ -40,14 +43,19 @@ import {
 } from './storage.js';
 import { formatPlaceName, isCoordinateLabel } from './text.js';
 import {
+  getForecastTab,
+  initForecastTabs,
   initPanelSheet,
   initTheme,
   renderCacheBadges,
   renderCurrentWeather,
   renderForecast,
+  renderHourly,
   setCurrentPlaceLabel,
   setSelectedCoords,
   showError,
+  showHourlyError,
+  showHourlyLoading,
   showLoading,
   showNotice,
 } from './ui.js';
@@ -72,6 +80,15 @@ let lastQueryKey = null;
 /** Acción que ejecuta el botón “Reintentar” después de un error. */
 let lastRetryAction = null;
 
+/** Última consulta válida, usada para pedir el pronóstico horario. */
+let currentQuery = null;
+
+/** Caché en memoria del pronóstico horario por ubicación. */
+const hourlyCache = new Map();
+
+/** Descarta respuestas horarias viejas si cambió la ubicación. */
+let hourlyRequestId = 0;
+
 /**
  * Devuelve un nombre de lugar utilizable, descartando coordenadas viejas.
  *
@@ -80,6 +97,72 @@ let lastRetryAction = null;
  */
 function usablePlaceLabel(label) {
   return label && !isCoordinateLabel(label) ? formatPlaceName(label) : null;
+}
+
+/**
+ * Redondea una coordenada a la celda que usa la API para cachear.
+ *
+ * @param {number} value
+ * @returns {number}
+ */
+function roundCoord(value) {
+  return Number(value.toFixed(COORD_DECIMALS));
+}
+
+/**
+ * @param {{ type: 'city', city: string } | { type: 'coords', lat: number, lon: number }} query
+ * @returns {string}
+ */
+function hourlyKey(query) {
+  return query.type === 'city'
+    ? `city:${query.city.toLowerCase()}`
+    : `coords:${query.lat},${query.lon}`;
+}
+
+/**
+ * Carga el pronóstico horario solo cuando la pestaña está activa.
+ */
+async function ensureHourly() {
+  if (getForecastTab() !== 'hourly' || !currentQuery) {
+    return;
+  }
+
+  const key = hourlyKey(currentQuery);
+  const cached = hourlyCache.get(key);
+  if (cached) {
+    renderHourly(cached);
+    return;
+  }
+
+  const request = ++hourlyRequestId;
+  showHourlyLoading();
+
+  try {
+    const result =
+      currentQuery.type === 'city'
+        ? await getHourlyByCity(currentQuery.city)
+        : await getHourly(currentQuery.lat, currentQuery.lon);
+
+    if (
+      request !== hourlyRequestId ||
+      getForecastTab() !== 'hourly' ||
+      hourlyKey(currentQuery) !== key
+    ) {
+      return;
+    }
+
+    hourlyCache.set(key, result.data);
+    renderHourly(result.data);
+  } catch (error) {
+    if (
+      request !== hourlyRequestId ||
+      getForecastTab() !== 'hourly' ||
+      hourlyKey(currentQuery) !== key
+    ) {
+      return;
+    }
+    showHourlyError(error);
+  }
 }
 
 /**
@@ -108,6 +191,7 @@ async function loadWeather(
     }
     renderCurrentWeather(current.data, fallbackLabel);
     renderForecast(forecast.data);
+    ensureHourly();
     renderCacheBadges({ current: current.cache, forecast: forecast.cache });
 
     if (labelPromise) {
@@ -146,18 +230,21 @@ function refreshChatAnchors() {
  */
 async function resumeFromAnchor(anchor) {
   const savedLabel = usablePlaceLabel(anchor.label);
+  const queryLat = roundCoord(anchor.lat);
+  const queryLon = roundCoord(anchor.lon);
   const labelPromise = savedLabel ? null : reverseGeocode(anchor.lat, anchor.lon);
   const location = {
     lat: anchor.lat,
     lon: anchor.lon,
     label: savedLabel ?? 'Lugar seleccionado',
   };
-  const queryKey = `coords:${anchor.lat},${anchor.lon}`;
+  const queryKey = `coords:${queryLat},${queryLon}`;
 
   centerOn(anchor.lat, anchor.lon, getZoom());
   placeMarker(anchor.lat, anchor.lon);
-  setSelectedCoords(anchor.lat, anchor.lon);
+  setSelectedCoords(queryLat, queryLon);
   lastQueryKey = queryKey;
+  currentQuery = { type: 'coords', lat: queryLat, lon: queryLon };
 
   resumeConversation(anchor);
   setChatLocation(location);
@@ -165,8 +252,8 @@ async function resumeFromAnchor(anchor) {
   lastRetryAction = () => resumeFromAnchor(anchor);
 
   const current = await loadWeather(
-    getCurrentWeather(anchor.lat, anchor.lon),
-    getForecast(anchor.lat, anchor.lon),
+    getCurrentWeather(queryLat, queryLon),
+    getForecast(queryLat, queryLon),
     labelPromise,
     savedLabel ?? 'Lugar seleccionado',
   );
@@ -203,6 +290,7 @@ async function resumeFromAnchor(anchor) {
 
 initTheme();
 initPanelSheet();
+initForecastTabs(ensureHourly);
 initChat({
   openPopup: openChatPopup,
   closePopup: closeChatPopup,
@@ -230,7 +318,9 @@ async function selectCoordinates(
   lon,
   { force = false, markerLat = lat, markerLon = lon } = {},
 ) {
-  const queryKey = `coords:${lat},${lon}`;
+  const queryLat = roundCoord(lat);
+  const queryLon = roundCoord(lon);
+  const queryKey = `coords:${queryLat},${queryLon}`;
   if (!force && queryKey === lastQueryKey) {
     // Misma celda de caché: el pin ya se movió, pero no repetimos la consulta.
     if (currentLocation) {
@@ -250,10 +340,15 @@ async function selectCoordinates(
     return;
   }
   lastQueryKey = queryKey;
+  currentQuery = { type: 'coords', lat: queryLat, lon: queryLon };
   lastRetryAction = () =>
-    selectCoordinates(lat, lon, { force: true, markerLat, markerLon });
+    selectCoordinates(queryLat, queryLon, {
+      force: true,
+      markerLat,
+      markerLon,
+    });
 
-  setSelectedCoords(lat, lon);
+  setSelectedCoords(queryLat, queryLon);
   const labelPromise = reverseGeocode(markerLat, markerLon);
   currentLocation = {
     lat: markerLat,
@@ -263,8 +358,8 @@ async function selectCoordinates(
   setChatLocation(currentLocation);
 
   const current = await loadWeather(
-    getCurrentWeather(lat, lon),
-    getForecast(lat, lon),
+    getCurrentWeather(queryLat, queryLon),
+    getForecast(queryLat, queryLon),
     labelPromise,
     'Lugar seleccionado',
   );
@@ -317,6 +412,7 @@ async function searchPlace(city) {
     return; // Ya se está mostrando esa ciudad.
   }
   lastQueryKey = queryKey;
+  currentQuery = { type: 'city', city };
   lastRetryAction = () => searchPlace(city);
 
   showLoading();
@@ -438,21 +534,28 @@ async function restoreLastLocation() {
   }
 
   const savedLabel = usablePlaceLabel(saved.label);
+  const queryLat = roundCoord(saved.lat);
+  const queryLon = roundCoord(saved.lon);
   const labelPromise = savedLabel ? null : reverseGeocode(saved.lat, saved.lon);
   const fallbackLabel = savedLabel ?? 'Lugar seleccionado';
-  const restoreQueryKey = `coords:${saved.lat},${saved.lon}`;
+  const restoreQueryKey = `coords:${queryLat},${queryLon}`;
 
   centerOn(saved.lat, saved.lon, saved.zoom);
   placeMarker(saved.lat, saved.lon);
-  setSelectedCoords(saved.lat, saved.lon);
+  setSelectedCoords(queryLat, queryLon);
   currentLocation = { lat: saved.lat, lon: saved.lon, label: fallbackLabel };
   setChatLocation(currentLocation);
+  currentQuery = { type: 'coords', lat: queryLat, lon: queryLon };
   lastRetryAction = () =>
-    selectCoordinates(saved.lat, saved.lon, { force: true });
+    selectCoordinates(queryLat, queryLon, {
+      force: true,
+      markerLat: saved.lat,
+      markerLon: saved.lon,
+    });
 
   const current = await loadWeather(
-    getCurrentWeather(saved.lat, saved.lon),
-    getForecast(saved.lat, saved.lon),
+    getCurrentWeather(queryLat, queryLon),
+    getForecast(queryLat, queryLon),
     labelPromise,
     fallbackLabel,
   );

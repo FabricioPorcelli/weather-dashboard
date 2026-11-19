@@ -21,6 +21,11 @@ const windEl = document.querySelector('#current-wind');
 const precipEl = document.querySelector('#current-precip');
 const updatedEl = document.querySelector('#current-updated');
 const forecastCardEl = document.querySelector('#forecast-card');
+const forecastTabs = [...document.querySelectorAll('.forecast-tab')];
+const dailyPanelEl = document.querySelector('#forecast-daily-panel');
+const hourlyPanelEl = document.querySelector('#forecast-hourly-panel');
+const hourlyDaysEl = document.querySelector('#hourly-days');
+const hourlyStatusEl = document.querySelector('#hourly-status');
 const daysEl = document.querySelector('#forecast-days');
 const themeButton = document.querySelector('#theme-toggle');
 const badgesEl = document.querySelector('#cache-badges');
@@ -281,11 +286,196 @@ export function renderForecast(data) {
   forecastCardEl.hidden = false;
 }
 
+let activeForecastTab = 'daily';
+let hourlyRequestCallback = null;
+
 /**
- * Crea una tarjeta de día con una barra que representa el rango térmico.
+ * Conecta las pestañas de pronóstico diario y horario.
  *
- * @param {object} day Día de la respuesta de /v1/forecast/coords/...
- * @param {{ minTemp: number, range: number, index: number, isToday: boolean }} context
+ * @param {() => void} onHourlyRequest
+ */
+export function initForecastTabs(onHourlyRequest) {
+  hourlyRequestCallback = onHourlyRequest ?? null;
+
+  for (const tab of forecastTabs) {
+    tab.addEventListener('click', () => {
+      activateForecastTab(tabNameFor(tab), true);
+    });
+
+    tab.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+        return;
+      }
+      event.preventDefault();
+      const index = forecastTabs.indexOf(tab);
+      const direction = event.key === 'ArrowRight' ? 1 : -1;
+      const nextIndex =
+        (index + direction + forecastTabs.length) % forecastTabs.length;
+      const next = forecastTabs[nextIndex];
+      activateForecastTab(tabNameFor(next), true);
+      next.focus();
+    });
+  }
+
+  activateForecastTab('daily', false);
+}
+
+/**
+ * @returns {'daily' | 'hourly'}
+ */
+export function getForecastTab() {
+  return activeForecastTab;
+}
+
+/**
+ * @param {HTMLElement} tab
+ * @returns {'daily' | 'hourly'}
+ */
+function tabNameFor(tab) {
+  return tab.id === 'forecast-tab-hourly' ? 'hourly' : 'daily';
+}
+
+/**
+ * @param {'daily' | 'hourly'} tabName
+ * @param {boolean} notify
+ */
+function activateForecastTab(tabName, notify) {
+  activeForecastTab = tabName;
+
+  for (const tab of forecastTabs) {
+    const selected = tabNameFor(tab) === tabName;
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  }
+
+  dailyPanelEl.hidden = tabName !== 'daily';
+  hourlyPanelEl.hidden = tabName !== 'hourly';
+
+  if (tabName === 'hourly' && notify) {
+    hourlyRequestCallback?.();
+  }
+}
+
+/**
+ * Muestra el estado de carga dentro de la pestaña horaria.
+ */
+export function showHourlyLoading() {
+  hourlyDaysEl.replaceChildren();
+  hourlyStatusEl.classList.remove('hourly-status--error');
+  hourlyStatusEl.textContent = 'Cargando próximas 24 horas…';
+  hourlyStatusEl.hidden = false;
+}
+
+/**
+ * Muestra un error dentro de la pestaña horaria sin afectar el resto.
+ *
+ * @param {string | Error} error
+ */
+export function showHourlyError(error) {
+  hourlyDaysEl.replaceChildren();
+  hourlyStatusEl.classList.add('hourly-status--error');
+  hourlyStatusEl.textContent =
+    typeof error === 'string' ? error : messageForError(error);
+  hourlyStatusEl.hidden = false;
+}
+
+/**
+ * Renderiza la tira de horas agrupada por día.
+ *
+ * @param {object} data Respuesta de /v1/hourly/...
+ */
+export function renderHourly(data) {
+  const hours = Array.isArray(data?.hours) ? data.hours : [];
+  if (hours.length === 0) {
+    showHourlyError('No hay pronóstico horario disponible.');
+    return;
+  }
+
+  hourlyStatusEl.hidden = true;
+  hourlyStatusEl.textContent = '';
+  hourlyStatusEl.classList.remove('hourly-status--error');
+
+  const groups = new Map();
+  for (const hour of hours) {
+    const day = String(hour.datetime ?? '').slice(0, 10);
+    if (!groups.has(day)) {
+      groups.set(day, []);
+    }
+    groups.get(day).push(hour);
+  }
+
+  const sections = [...groups.entries()].map(([day, dayHours], groupIndex) => {
+    const section = document.createElement('section');
+    section.className = 'hourly-group';
+
+    const label = document.createElement('h3');
+    label.className = 'hourly-group__label';
+    label.textContent =
+      groupIndex === 0
+        ? 'Hoy'
+        : groupIndex === 1
+          ? 'Mañana'
+          : formatDayNumber(day);
+
+    const row = document.createElement('div');
+    row.className = 'hourly-group__hours';
+
+    dayHours.forEach((hour, hourIndex) => {
+      const isNow = groupIndex === 0 && hourIndex === 0;
+      const time = isNow ? 'Ahora' : formatHourLabel(hour.datetime);
+      const rain = hour.precipitation_probability ?? 0;
+
+      const card = document.createElement('article');
+      card.className = 'hourly-hour';
+      card.classList.toggle('hourly-hour--now', isNow);
+      card.setAttribute(
+        'aria-label',
+        `${time}: ${Math.round(hour.temperature_c)} grados, ${rain}% de probabilidad de lluvia, ${hour.conditions}`,
+      );
+
+      const content = document.createElement('div');
+      content.className = 'hourly-hour__content';
+      content.setAttribute('aria-hidden', 'true');
+
+      const timeEl = document.createElement('span');
+      timeEl.className = 'hourly-hour__time';
+      timeEl.textContent = time;
+
+      const icon = createWeatherIcon(hour.conditions ?? '');
+      const tempEl = document.createElement('span');
+      tempEl.className = 'hourly-hour__temp';
+      tempEl.textContent = `${Math.round(hour.temperature_c)}°`;
+
+      const rainEl = document.createElement('span');
+      rainEl.className = 'hourly-hour__rain';
+      const rainDot = document.createElement('span');
+      rainDot.className = 'forecast-day__rain-dot';
+      rainEl.append(rainDot, document.createTextNode(`${rain}%`));
+
+      content.append(timeEl, icon, tempEl, rainEl);
+      card.append(content);
+      row.append(card);
+    });
+
+    section.append(label, row);
+    return section;
+  });
+
+  hourlyDaysEl.replaceChildren(...sections);
+}
+
+/**
+ * @param {string} datetime
+ * @returns {string}
+ */
+function formatHourLabel(datetime) {
+  const match = String(datetime).match(/T(\d{2}):(\d{2})/);
+  return match ? `${match[1]}:${match[2]}` : '';
+}
+
+/**
+ * @param {object} day
+ * @param {object} context
  * @returns {HTMLLIElement}
  */
 function createDayItem(day, { minTemp, range, index, isToday }) {

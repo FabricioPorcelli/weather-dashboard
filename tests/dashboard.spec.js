@@ -29,6 +29,37 @@ test('busca una ciudad y muestra el clima y el pronóstico', async ({ page }) =>
   );
 });
 
+test('carga el pronóstico horario solo al abrir la pestaña y lo cachea', async ({
+  page,
+}) => {
+  let hourlyRequests = 0;
+  page.on('request', (request) => {
+    if (request.url().includes('/v1/hourly/')) {
+      hourlyRequests += 1;
+    }
+  });
+
+  await page.goto('/');
+  await searchRosario(page);
+
+  await expect(page.getByRole('tab', { name: '5 días' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  expect(hourlyRequests).toBe(0);
+
+  await page.getByRole('tab', { name: 'Por hora' }).click();
+  await expect(page.locator('#forecast-hourly-panel')).toBeVisible();
+  await expect(page.locator('.hourly-hour')).toHaveCount(24);
+  expect(hourlyRequests).toBe(1);
+
+  await page.getByRole('tab', { name: '5 días' }).click();
+  await page.getByRole('tab', { name: 'Por hora' }).click();
+
+  await expect(page.locator('.hourly-hour')).toHaveCount(24);
+  expect(hourlyRequests).toBe(1);
+});
+
 test('carga el clima al hacer clic en el mapa y consulta la celda redondeada', async ({
   page,
 }) => {

@@ -15,6 +15,24 @@ export const currentWeather = {
   updated_at: '2026-11-16T17:38:00-03:00',
 };
 
+export const hourlyForecast = {
+  location: 'Rosario',
+  hours: Array.from({ length: 24 }, (_, index) => {
+    const moment = new Date(Date.UTC(2026, 10, 19, 14 + index));
+    return {
+      datetime: moment.toISOString().slice(0, 19),
+      temperature_c: 31 - Math.floor(index / 4),
+      feels_like_c: 32 - Math.floor(index / 4),
+      humidity: 58,
+      precipitation_mm: 0,
+      precipitation_probability: index < 4 ? 52 : 10,
+      conditions: index < 4 ? 'Lluvia' : 'Parcialmente nublado',
+      wind_speed_kmh: 8,
+      icon: index < 4 ? 'rain' : 'partly-cloudy-day',
+    };
+  }),
+};
+
 export const forecast = {
   location: 'Rosario',
   days: [
@@ -149,6 +167,13 @@ export async function mockWeatherApi(page) {
       status: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify(forecast),
+    }),
+  );
+  await page.route('http://localhost:8000/v1/hourly/**', (route) =>
+    route.fulfill({
+      status: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify(hourlyForecast),
     }),
   );
 }

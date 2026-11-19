@@ -4,7 +4,11 @@
  * traducción de errores a objetos ApiError con un mensaje mostrable.
  */
 
-import { API_BASE_URL, FORECAST_DAYS } from './config.js';
+import {
+  API_BASE_URL,
+  FORECAST_DAYS,
+  HOURLY_FORECAST_HOURS,
+} from './config.js';
 
 /**
  * Error de la API con el código HTTP asociado.
@@ -109,4 +113,29 @@ export function getCurrentWeatherByCity(city) {
  */
 export function getForecastByCity(city) {
   return request(`/v1/forecast/${encodeURIComponent(city)}?days=${FORECAST_DAYS}`);
+}
+
+/**
+ * Obtiene el pronóstico horario para un par de coordenadas.
+ *
+ * @param {number} lat
+ * @param {number} lon
+ * @returns {Promise<{ data: object, cache: string | null }>}
+ */
+export function getHourly(lat, lon) {
+  return request(
+    `/v1/hourly/coords/${lat}/${lon}?hours=${HOURLY_FORECAST_HOURS}`,
+  );
+}
+
+/**
+ * Obtiene el pronóstico horario para una ciudad.
+ *
+ * @param {string} city
+ * @returns {Promise<{ data: object, cache: string | null }>}
+ */
+export function getHourlyByCity(city) {
+  return request(
+    `/v1/hourly/${encodeURIComponent(city)}?hours=${HOURLY_FORECAST_HOURS}`,
+  );
 }

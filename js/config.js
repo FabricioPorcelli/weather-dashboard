@@ -30,6 +30,9 @@ export const ASSISTANT_BASE_URL = IS_LOCAL
 /** Días de pronóstico solicitados a la API (rango permitido: 1 a 15). */
 export const FORECAST_DAYS = 5;
 
+/** Horas de pronóstico solicitadas al endpoint horario (rango permitido: 1 a 48). */
+export const HOURLY_FORECAST_HOURS = 24;
+
 /**
  * Decimales a los que se redondean las coordenadas en el frontend.
  * Coincide con la precisión de la API (2 decimales, ~1 km): clics dentro de

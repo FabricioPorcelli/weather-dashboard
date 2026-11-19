@@ -200,12 +200,57 @@
 
         <!-- Pronóstico: tira de 5 días con barras de rango de temperatura -->
         <section class="card card--forecast" id="forecast-card" hidden>
-          <h2 class="card__title">Próximos 5 días</h2>
-          <ul
-            class="forecast"
-            id="forecast-days"
-            aria-label="Pronóstico de los próximos días"
-          ></ul>
+          <div class="forecast-header">
+            <h2 class="card__title">Pronóstico</h2>
+            <div class="forecast-tabs" role="tablist" aria-label="Vista del pronóstico">
+              <button
+                class="forecast-tab"
+                id="forecast-tab-daily"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="forecast-daily-panel"
+                tabindex="0"
+              >
+                5 días
+              </button>
+              <button
+                class="forecast-tab"
+                id="forecast-tab-hourly"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="forecast-hourly-panel"
+                tabindex="-1"
+              >
+                Por hora
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="forecast-panel"
+            id="forecast-daily-panel"
+            role="tabpanel"
+            aria-labelledby="forecast-tab-daily"
+          >
+            <ul
+              class="forecast"
+              id="forecast-days"
+              aria-label="Pronóstico de los próximos días"
+            ></ul>
+          </div>
+
+          <div
+            class="forecast-panel"
+            id="forecast-hourly-panel"
+            role="tabpanel"
+            aria-labelledby="forecast-tab-hourly"
+            hidden
+          >
+            <p class="hourly-status" id="hourly-status" aria-live="polite" hidden></p>
+            <div class="hourly-scroll" id="hourly-days"></div>
+          </div>
         </section>
       </div>
     </div>
