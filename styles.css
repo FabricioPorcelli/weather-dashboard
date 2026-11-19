@@ -1468,15 +1468,16 @@ body.chat-open {
   }
 
   .panel__handle-grip {
-    width: 34px;
-    height: 3px;
-    background: var(--color-border);
-    border-radius: 999px;
-    transition: background 0.2s ease, transform 0.2s ease;
+    display: block;
+    width: 44px;
+    height: 12px;
+    color: var(--color-muted);
+    opacity: 0.5;
+    transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   }
 
   .panel__handle:hover .panel__handle-grip {
-    background: var(--color-muted);
+    opacity: 0.9;
   }
 
   .panel--dragging .panel__handle {
@@ -1484,8 +1485,12 @@ body.chat-open {
   }
 
   .panel--dragging .panel__handle-grip {
-    background: var(--color-accent);
-    transform: scaleX(1.12);
+    color: var(--color-accent);
+    opacity: 1;
+  }
+
+  .panel--collapsed .panel__handle-grip {
+    transform: scaleY(-1);
   }
 
   /* Estado compacto: resumen y detalles, sin fecha de actualización. */
