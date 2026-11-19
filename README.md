@@ -15,7 +15,9 @@ La aplicación corre en un **self-hosted home lab**. En mi portfolio explico có
 - Elegir una ubicación tocando el mapa, buscando una ciudad o pueblo, o usando la ubicación del navegador.
 - Ver el clima actual: temperatura, sensación térmica, humedad, viento y precipitación.
 - Reintentar la última consulta si la API falla.
+- El pin sigue el punto exacto del clic, pero el clima se consulta por una celda de ~1 km para aprovechar la caché.
 - Consultar el pronóstico de los próximos 5 días con rangos de temperatura, íconos y probabilidad de lluvia.
+- Ver la actualización como “Actualizado ahora” o “Actualizado hace X minutos”.
 - Cambiar entre tema claro y oscuro.
 - Usar el dashboard desde la computadora o el celular.
 - En móvil, arrastrar la barra superior del panel para colapsarlo y dejar a la vista el resumen y los detalles del clima.
@@ -68,7 +70,7 @@ Para habilitar el chat, seguí las instrucciones de [weather-assistant](https://
 
 ## Tests
 
-Los tests E2E cubren búsqueda con fallback, clic en el mapa, tema, geolocalización, reintento, bottom sheet móvil y apertura/cierre del chat. Mockean las APIs, así que no necesitan claves ni servicios levantados. Solo necesitan red para cargar Leaflet desde su CDN.
+Los 10 tests E2E cubren búsqueda con fallback, clic en el mapa, tema, geolocalización, reintento, bottom sheet móvil y apertura/cierre del chat. Mockean las APIs, así que no necesitan claves ni servicios levantados. Solo necesitan red para cargar Leaflet desde su CDN.
 
 ```bash
 npm ci

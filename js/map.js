@@ -31,8 +31,8 @@ let chatPopupCloseHandler = null;
 /**
  * Crea el mapa en el contenedor #map y registra el evento de clic.
  *
- * @param {(lat: number, lon: number) => void} onLocationSelected
- *   Callback que se ejecuta al hacer clic, con las coordenadas del punto.
+ * @param {(lat: number, lon: number, exact: { lat: number, lon: number }) => void}
+ *   Callback con la celda redondeada que se consulta y el punto exacto del clic.
  * @param {'dark' | 'light'} theme Tema inicial de los tiles.
  */
 export function initMap(onLocationSelected, theme) {
@@ -46,10 +46,16 @@ export function initMap(onLocationSelected, theme) {
   setMapTheme(theme);
 
   map.on('click', (event) => {
-    const lat = roundCoord(event.latlng.lat);
-    const lon = roundCoord(event.latlng.lng);
-    placeMarker(lat, lon);
-    onLocationSelected(lat, lon);
+    const exact = {
+      lat: event.latlng.lat,
+      lon: event.latlng.lng,
+    };
+    const lat = roundCoord(exact.lat);
+    const lon = roundCoord(exact.lon);
+
+    // El pin sigue el clic exacto; la consulta usa la celda de ~1 km.
+    placeMarker(exact.lat, exact.lon);
+    onLocationSelected(lat, lon, exact);
   });
 }
 

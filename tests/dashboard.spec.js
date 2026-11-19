@@ -24,16 +24,30 @@ test('busca una ciudad y muestra el clima y el pronóstico', async ({ page }) =>
   await expect(page.locator('#coords')).toBeHidden();
   await expect(page.locator('#cache-badges')).toBeHidden();
   await expect(page.locator('#live-status')).toContainText('Rosario');
+  await expect(page.locator('#current-updated')).toHaveText(
+    /Actualizado (ahora|hace)/,
+  );
 });
 
-test('carga el clima al hacer clic en el mapa', async ({ page }) => {
-  await page.goto('/');
+test('carga el clima al hacer clic en el mapa y consulta la celda redondeada', async ({
+  page,
+}) => {
+  let weatherUrl = '';
+  page.on('request', (request) => {
+    if (request.url().includes('/v1/weather/coords/')) {
+      weatherUrl = request.url();
+    }
+  });
 
+  await page.goto('/');
   await page.locator('#map').click({ position: { x: 500, y: 350 } });
 
   await expect(page.locator('#current-card')).toBeVisible();
   await expect(page.locator('#current-location')).toHaveText('Rosario');
   await expect(page.locator('#current-temp')).toHaveText('31');
+  expect(weatherUrl).toMatch(
+    /\/v1\/weather\/coords\/-?\d+(\.\d{1,2})?\/-?\d+(\.\d{1,2})?$/,
+  );
 });
 
 test('usa Open-Meteo cuando Nominatim falla', async ({ page }) => {

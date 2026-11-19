@@ -219,19 +219,47 @@ document.addEventListener('themechange', (event) => {
  *
  * @param {number} lat
  * @param {number} lon
- * @param {{ force?: boolean }} [options]
+ * @param {{
+ *   force?: boolean,
+ *   markerLat?: number,
+ *   markerLon?: number,
+ * }} [options]
  */
-async function selectCoordinates(lat, lon, { force = false } = {}) {
+async function selectCoordinates(
+  lat,
+  lon,
+  { force = false, markerLat = lat, markerLon = lon } = {},
+) {
   const queryKey = `coords:${lat},${lon}`;
   if (!force && queryKey === lastQueryKey) {
-    return; // Misma celda (~1 km): ya se mostró o se está pidiendo.
+    // Misma celda de caché: el pin ya se movió, pero no repetimos la consulta.
+    if (currentLocation) {
+      currentLocation = {
+        ...currentLocation,
+        lat: markerLat,
+        lon: markerLon,
+      };
+      setChatLocation(currentLocation);
+      saveLastLocation({
+        lat: markerLat,
+        lon: markerLon,
+        label: currentLocation.label ?? null,
+        zoom: getZoom(),
+      });
+    }
+    return;
   }
   lastQueryKey = queryKey;
-  lastRetryAction = () => selectCoordinates(lat, lon, { force: true });
+  lastRetryAction = () =>
+    selectCoordinates(lat, lon, { force: true, markerLat, markerLon });
 
   setSelectedCoords(lat, lon);
-  const labelPromise = reverseGeocode(lat, lon);
-  currentLocation = { lat, lon, label: 'Lugar seleccionado' };
+  const labelPromise = reverseGeocode(markerLat, markerLon);
+  currentLocation = {
+    lat: markerLat,
+    lon: markerLon,
+    label: 'Lugar seleccionado',
+  };
   setChatLocation(currentLocation);
 
   const current = await loadWeather(
@@ -257,15 +285,23 @@ async function selectCoordinates(lat, lon, { force = false } = {}) {
     usablePlaceLabel(current.location) ??
     'Lugar seleccionado';
 
-  currentLocation = { lat, lon, label: placeLabel };
+  currentLocation = { lat: markerLat, lon: markerLon, label: placeLabel };
   setChatLocation(currentLocation);
-  saveLastLocation({ lat, lon, label: placeLabel, zoom: getZoom() });
+  saveLastLocation({
+    lat: markerLat,
+    lon: markerLon,
+    label: placeLabel,
+    zoom: getZoom(),
+  });
   lastRetryAction = null;
 }
 
-initMap(async (lat, lon) => {
+initMap(async (lat, lon, exact) => {
   window.umami?.track('map-click');
-  await selectCoordinates(lat, lon);
+  await selectCoordinates(lat, lon, {
+    markerLat: exact.lat,
+    markerLon: exact.lon,
+  });
 }, initialTheme);
 
 refreshChatAnchors();

@@ -28,6 +28,8 @@ const cacheCurrentEl = document.querySelector('#cache-current');
 const cacheForecastEl = document.querySelector('#cache-forecast');
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 
+let lastUpdatedIso = null;
+
 /**
  * Muestra las coordenadas de la ubicación elegida.
  *
@@ -119,7 +121,8 @@ export function renderCurrentWeather(data, label = null) {
   humidityEl.textContent = `${data.humidity} %`;
   windEl.textContent = `${data.wind_speed_kmh.toFixed(1)} km/h`;
   precipEl.textContent = `${data.precipitation_mm.toFixed(1)} mm`;
-  updatedEl.textContent = `Actualizado: ${formatDateTime(data.updated_at)}`;
+  lastUpdatedIso = data.updated_at;
+  updateUpdatedLabel();
   cardEl.hidden = false;
   retryEl.hidden = true;
   liveStatusEl.textContent = `${locationEl.textContent}: ${Math.round(
@@ -186,20 +189,46 @@ function setBadge(element, label, value) {
 }
 
 /**
- * Formatea una fecha ISO en formato local, por ejemplo "25/09/2026, 09:00".
+ * Actualiza la etiqueta de “Actualizado…” usando tiempo relativo.
+ */
+function updateUpdatedLabel() {
+  if (!lastUpdatedIso) {
+    return;
+  }
+  updatedEl.textContent = formatRelativeTime(lastUpdatedIso);
+}
+
+/**
+ * Formatea una fecha como “Actualizado ahora”, “hace 5 min” o “hace 2 h”.
  *
  * @param {string} isoDate
  * @returns {string}
  */
-function formatDateTime(isoDate) {
-  return new Date(isoDate).toLocaleString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function formatRelativeTime(isoDate) {
+  const timestamp = new Date(isoDate).getTime();
+  if (!Number.isFinite(timestamp)) {
+    return 'Actualizado ahora';
+  }
+
+  const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+  if (minutes < 1) {
+    return 'Actualizado ahora';
+  }
+  if (minutes < 60) {
+    return `Actualizado hace ${minutes} min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `Actualizado hace ${hours} h`;
+  }
+
+  const days = Math.floor(hours / 24);
+  return `Actualizado hace ${days} d`;
 }
+
+// Mantiene el tiempo relativo al día aunque la página quede abierta.
+window.setInterval(updateUpdatedLabel, 60000);
 
 /** Íconos SVG estáticos para acompañar cada día del pronóstico. */
 const WEATHER_ICON_PATHS = {
