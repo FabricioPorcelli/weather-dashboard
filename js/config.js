@@ -37,6 +37,9 @@ export const FORECAST_DAYS = 5;
  */
 export const COORD_DECIMALS = 2;
 
+/** Decimales para la ubicación real del navegador (más precisos que el mapa). */
+export const GEOLOCATION_COORD_DECIMALS = 4;
+
 /** Zoom al que se centra una ciudad buscada por nombre. */
 export const CITY_ZOOM = 13;
 

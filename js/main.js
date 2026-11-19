@@ -18,7 +18,10 @@ import {
   resumeConversation,
   setChatLocation,
 } from './chat.js';
-import { CITY_ZOOM, COORD_DECIMALS } from './config.js';
+import {
+  CITY_ZOOM,
+  GEOLOCATION_COORD_DECIMALS,
+} from './config.js';
 import { geocodeCity, reverseGeocode } from './geocode.js';
 import {
   centerOn,
@@ -357,8 +360,12 @@ locateButton.addEventListener('click', () => {
   navigator.geolocation.getCurrentPosition(
     (position) => {
       locateButton.disabled = false;
-      const lat = Number(position.coords.latitude.toFixed(COORD_DECIMALS));
-      const lon = Number(position.coords.longitude.toFixed(COORD_DECIMALS));
+      const lat = Number(
+        position.coords.latitude.toFixed(GEOLOCATION_COORD_DECIMALS),
+      );
+      const lon = Number(
+        position.coords.longitude.toFixed(GEOLOCATION_COORD_DECIMALS),
+      );
 
       centerOn(lat, lon, CITY_ZOOM);
       placeMarker(lat, lon);
