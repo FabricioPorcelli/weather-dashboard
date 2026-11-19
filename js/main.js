@@ -86,6 +86,9 @@ let currentQuery = null;
 /** Caché en memoria del pronóstico horario por ubicación. */
 const hourlyCache = new Map();
 
+/** Peticiones horarias en curso, para no duplicarlas. */
+const hourlyPending = new Map();
+
 /** Descarta respuestas horarias viejas si cambió la ubicación. */
 let hourlyRequestId = 0;
 
@@ -120,14 +123,51 @@ function hourlyKey(query) {
 }
 
 /**
- * Carga el pronóstico horario solo cuando la pestaña está activa.
+ * Obtiene el pronóstico horario, reutilizando la caché o una petición en curso.
+ *
+ * @param {{ type: 'city', city: string } | { type: 'coords', lat: number, lon: number }} query
+ * @returns {Promise<object>}
+ */
+function fetchHourly(query) {
+  const key = hourlyKey(query);
+  const cached = hourlyCache.get(key);
+  if (cached) {
+    return Promise.resolve(cached);
+  }
+
+  const pending = hourlyPending.get(key);
+  if (pending) {
+    return pending;
+  }
+
+  const promise = (
+    query.type === 'city'
+      ? getHourlyByCity(query.city)
+      : getHourly(query.lat, query.lon)
+  )
+    .then((result) => {
+      hourlyCache.set(key, result.data);
+      return result.data;
+    })
+    .finally(() => {
+      hourlyPending.delete(key);
+    });
+
+  hourlyPending.set(key, promise);
+  return promise;
+}
+
+/**
+ * Muestra el pronóstico horario de la consulta activa cuando la pestaña
+ * está seleccionada. La caché evita repetir llamados al cambiar de pestaña.
  */
 async function ensureHourly() {
   if (getForecastTab() !== 'hourly' || !currentQuery) {
     return;
   }
 
-  const key = hourlyKey(currentQuery);
+  const query = currentQuery;
+  const key = hourlyKey(query);
   const cached = hourlyCache.get(key);
   if (cached) {
     renderHourly(cached);
@@ -138,25 +178,21 @@ async function ensureHourly() {
   showHourlyLoading();
 
   try {
-    const result =
-      currentQuery.type === 'city'
-        ? await getHourlyByCity(currentQuery.city)
-        : await getHourly(currentQuery.lat, currentQuery.lon);
-
+    const data = await fetchHourly(query);
     if (
       request !== hourlyRequestId ||
       getForecastTab() !== 'hourly' ||
+      !currentQuery ||
       hourlyKey(currentQuery) !== key
     ) {
       return;
     }
-
-    hourlyCache.set(key, result.data);
-    renderHourly(result.data);
+    renderHourly(data);
   } catch (error) {
     if (
       request !== hourlyRequestId ||
       getForecastTab() !== 'hourly' ||
+      !currentQuery ||
       hourlyKey(currentQuery) !== key
     ) {
       return;
@@ -173,6 +209,7 @@ async function ensureHourly() {
  * @param {Promise<object>} forecastPromise Pronóstico.
  * @param {Promise<string | null> | null} [labelPromise] Nombre del lugar en resolución.
  * @param {string | null} [fallbackLabel] Nombre a mostrar mientras se resuelve.
+ * @param {Promise<object> | null} [hourlyPromise] Pronóstico horario en paralelo.
  * @returns {Promise<object | null>} Datos del clima actual, o null si no se renderizó.
  */
 async function loadWeather(
@@ -180,9 +217,14 @@ async function loadWeather(
   forecastPromise,
   labelPromise = null,
   fallbackLabel = null,
+  hourlyPromise = null,
 ) {
   const currentRequest = ++requestId;
   showLoading();
+
+  if (hourlyPromise && getForecastTab() === 'hourly') {
+    showHourlyLoading();
+  }
 
   try {
     const [current, forecast] = await Promise.all([currentPromise, forecastPromise]);
@@ -191,8 +233,21 @@ async function loadWeather(
     }
     renderCurrentWeather(current.data, fallbackLabel);
     renderForecast(forecast.data);
-    ensureHourly();
     renderCacheBadges({ current: current.cache, forecast: forecast.cache });
+
+    if (hourlyPromise) {
+      hourlyPromise
+        .then((data) => {
+          if (currentRequest === requestId && getForecastTab() === 'hourly') {
+            renderHourly(data);
+          }
+        })
+        .catch((error) => {
+          if (currentRequest === requestId && getForecastTab() === 'hourly') {
+            showHourlyError(error);
+          }
+        });
+    }
 
     if (labelPromise) {
       labelPromise
@@ -245,6 +300,7 @@ async function resumeFromAnchor(anchor) {
   setSelectedCoords(queryLat, queryLon);
   lastQueryKey = queryKey;
   currentQuery = { type: 'coords', lat: queryLat, lon: queryLon };
+  const hourlyPromise = fetchHourly(currentQuery);
 
   resumeConversation(anchor);
   setChatLocation(location);
@@ -256,6 +312,7 @@ async function resumeFromAnchor(anchor) {
     getForecast(queryLat, queryLon),
     labelPromise,
     savedLabel ?? 'Lugar seleccionado',
+    hourlyPromise,
   );
 
   if (!current) {
@@ -341,6 +398,7 @@ async function selectCoordinates(
   }
   lastQueryKey = queryKey;
   currentQuery = { type: 'coords', lat: queryLat, lon: queryLon };
+  const hourlyPromise = fetchHourly(currentQuery);
   lastRetryAction = () =>
     selectCoordinates(queryLat, queryLon, {
       force: true,
@@ -362,6 +420,7 @@ async function selectCoordinates(
     getForecast(queryLat, queryLon),
     labelPromise,
     'Lugar seleccionado',
+    hourlyPromise,
   );
 
   if (!current) {
@@ -412,7 +471,8 @@ async function searchPlace(city) {
     return; // Ya se está mostrando esa ciudad.
   }
   lastQueryKey = queryKey;
-  currentQuery = { type: 'city', city };
+  const query = { type: 'city', city };
+  currentQuery = query;
   lastRetryAction = () => searchPlace(city);
 
   showLoading();
@@ -435,11 +495,13 @@ async function searchPlace(city) {
     currentLocation = { lat: place.lat, lon: place.lon, label: placeLabel };
     setChatLocation(currentLocation);
 
+    const hourlyPromise = fetchHourly(query);
     const current = await loadWeather(
       getCurrentWeatherByCity(city),
       getForecastByCity(city),
       null,
       placeLabel,
+      hourlyPromise,
     );
     if (!current) {
       if (lastQueryKey === queryKey) {
@@ -546,6 +608,7 @@ async function restoreLastLocation() {
   currentLocation = { lat: saved.lat, lon: saved.lon, label: fallbackLabel };
   setChatLocation(currentLocation);
   currentQuery = { type: 'coords', lat: queryLat, lon: queryLon };
+  const hourlyPromise = fetchHourly(currentQuery);
   lastRetryAction = () =>
     selectCoordinates(queryLat, queryLon, {
       force: true,
@@ -558,6 +621,7 @@ async function restoreLastLocation() {
     getForecast(queryLat, queryLon),
     labelPromise,
     fallbackLabel,
+    hourlyPromise,
   );
 
   if (current) {

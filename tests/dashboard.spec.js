@@ -46,24 +46,36 @@ test('busca una ciudad y muestra el clima y el pronóstico', async ({ page }) =>
   );
 });
 
-test('carga el pronóstico horario solo al abrir la pestaña y lo cachea', async ({
+test('carga el pronóstico horario junto con la ciudad y lo cachea', async ({
   page,
 }) => {
   let hourlyRequests = 0;
+  const apiPaths = [];
   page.on('request', (request) => {
-    if (request.url().includes('/v1/hourly/')) {
+    const url = new URL(request.url());
+    if (!url.pathname.startsWith('/v1/')) {
+      return;
+    }
+    apiPaths.push(url.pathname);
+    if (url.pathname.startsWith('/v1/hourly/')) {
       hourlyRequests += 1;
     }
   });
 
   await page.goto('/');
+  const hourlyRequest = page.waitForRequest((request) =>
+    request.url().includes('/v1/hourly/'),
+  );
   await searchRosario(page);
+  await hourlyRequest;
 
   await expect(page.getByRole('tab', { name: '5 días' })).toHaveAttribute(
     'aria-selected',
     'true',
   );
-  expect(hourlyRequests).toBe(0);
+  expect(apiPaths.some((path) => path.startsWith('/v1/weather/'))).toBe(true);
+  expect(apiPaths.some((path) => path.startsWith('/v1/forecast/'))).toBe(true);
+  expect(hourlyRequests).toBe(1);
 
   await page.getByRole('tab', { name: 'Por hora' }).click();
   await expect(page.locator('#forecast-hourly-panel')).toBeVisible();
