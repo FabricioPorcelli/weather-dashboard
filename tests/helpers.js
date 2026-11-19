@@ -15,10 +15,27 @@ export const currentWeather = {
   updated_at: '2026-11-16T17:38:00-03:00',
 };
 
+const HOURLY_KINDS = [
+  ['Lluvia', 'rain'],
+  ['Lluvia', 'rain'],
+  ['Lluvia', 'rain'],
+  ['Lluvia', 'rain'],
+  ['Tormenta', 'storm'],
+  ['Parcialmente nublado', 'partly-cloudy-day'],
+  ['Despejado', 'clear-day'],
+  ['Despejado', 'clear-night'],
+  ['Parcialmente nublado', 'partly-cloudy-night'],
+  ['Ventoso', 'wind'],
+];
+
 export const hourlyForecast = {
   location: 'Rosario',
   hours: Array.from({ length: 24 }, (_, index) => {
     const moment = new Date(Date.UTC(2026, 10, 19, 14 + index));
+    const [conditions, icon] = HOURLY_KINDS[index] ?? [
+      'Parcialmente nublado',
+      'partly-cloudy-day',
+    ];
     return {
       datetime: moment.toISOString().slice(0, 19),
       temperature_c: 31 - Math.floor(index / 4),
@@ -26,14 +43,9 @@ export const hourlyForecast = {
       humidity: 58,
       precipitation_mm: 0,
       precipitation_probability: index < 4 ? 52 : 10,
-      conditions:
-        index === 4
-          ? 'Tormenta'
-          : index < 4
-            ? 'Lluvia'
-            : 'Parcialmente nublado',
+      conditions,
       wind_speed_kmh: 8,
-      icon: index === 4 ? 'storm' : index < 4 ? 'rain' : 'partly-cloudy-day',
+      icon,
     };
   }),
 };
@@ -59,8 +71,8 @@ export const forecast = {
       temp_min_c: 20,
       temp_c: 24,
       precipitation_mm: 0,
-      precipitation_probability: 97,
-      conditions: 'Lluvia',
+      precipitation_probability: 26,
+      conditions: 'Parcialmente nublado',
       wind_speed_kmh: 12,
       sunrise: '06:01',
       sunset: '20:01',
@@ -83,8 +95,8 @@ export const forecast = {
       temp_min_c: 17,
       temp_c: 21,
       precipitation_mm: 0,
-      precipitation_probability: 16,
-      conditions: 'Nublado',
+      precipitation_probability: 5,
+      conditions: 'Despejado',
       wind_speed_kmh: 9,
       sunrise: '06:03',
       sunset: '20:03',
@@ -95,8 +107,8 @@ export const forecast = {
       temp_min_c: 17,
       temp_c: 22,
       precipitation_mm: 0,
-      precipitation_probability: 26,
-      conditions: 'Nublado',
+      precipitation_probability: 10,
+      conditions: 'Ventoso',
       wind_speed_kmh: 7,
       sunrise: '06:04',
       sunset: '20:04',

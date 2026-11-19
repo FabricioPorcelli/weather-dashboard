@@ -38,6 +38,23 @@ test('busca una ciudad y muestra el clima y el pronóstico', async ({ page }) =>
     'forecast-day__date',
   ]);
 
+  const dailyIcons = await page
+    .locator('.forecast-day .forecast-day__icon')
+    .evaluateAll((elements) =>
+      elements.map((element) =>
+        [...element.classList].find((name) =>
+          name.startsWith('weather-icon--'),
+        ),
+      ),
+    );
+  expect(dailyIcons).toEqual([
+    'weather-icon--rain',
+    'weather-icon--partly',
+    'weather-icon--cloud',
+    'weather-icon--sun',
+    'weather-icon--wind',
+  ]);
+
   await expect(page.locator('#coords')).toBeHidden();
   await expect(page.locator('#cache-badges')).toBeHidden();
   await expect(page.locator('#live-status')).toContainText('Rosario');
@@ -165,6 +182,33 @@ test('carga el pronóstico horario junto con la ciudad y lo cachea', async ({
     'hourly-hour__rain',
     'hourly-hour__time',
   ]);
+
+  const hourlyIcons = await page
+    .locator('.hourly-hour .forecast-day__icon')
+    .evaluateAll((elements) =>
+      elements.map((element) =>
+        [...element.classList].find((name) =>
+          name.startsWith('weather-icon--'),
+        ),
+      ),
+    );
+  expect(hourlyIcons).toEqual(
+    expect.arrayContaining([
+      'weather-icon--rain',
+      'weather-icon--storm',
+      'weather-icon--partly',
+      'weather-icon--sun',
+      'weather-icon--moon',
+      'weather-icon--partly-night',
+      'weather-icon--wind',
+    ]),
+  );
+
+  const moonAnimation = await page
+    .locator('.hourly-hour .weather-icon__moon')
+    .first()
+    .evaluate((element) => getComputedStyle(element).animationName);
+  expect(moonAnimation).toBe('weather-moon-glow');
 
   const iconColors = await page
     .locator('.hourly-hour .weather-icon--rain')
