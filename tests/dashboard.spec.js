@@ -77,12 +77,21 @@ test('carga el pronóstico horario junto con la ciudad y lo cachea', async ({
   expect(apiPaths.some((path) => path.startsWith('/v1/forecast/'))).toBe(true);
   expect(hourlyRequests).toBe(1);
 
+  const dailyPanelHeight = await page
+    .locator('#forecast-daily-panel')
+    .evaluate((element) => element.getBoundingClientRect().height);
+
   await page.getByRole('tab', { name: 'Por hora' }).click();
   await expect(page.locator('#forecast-hourly-panel')).toBeVisible();
   await expect(page.locator('.hourly-hour')).toHaveCount(24);
   await expect(page.locator('#forecast-icon-hourly')).toBeVisible();
   await expect(page.locator('#forecast-icon-daily')).toBeHidden();
   expect(hourlyRequests).toBe(1);
+
+  const hourlyPanelHeight = await page
+    .locator('#forecast-hourly-panel')
+    .evaluate((element) => element.getBoundingClientRect().height);
+  expect(Math.abs(hourlyPanelHeight - dailyPanelHeight)).toBeLessThanOrEqual(1);
 
   const hourlyOrder = await page
     .locator('.hourly-hour')
