@@ -21,6 +21,23 @@ test('busca una ciudad y muestra el clima y el pronóstico', async ({ page }) =>
   await expect(page.locator('#current-temp')).toHaveText('31');
   await expect(page.locator('#forecast-card')).toBeVisible();
   await expect(page.locator('.forecast-day')).toHaveCount(5);
+  await expect(page.locator('#forecast-icon-daily')).toBeVisible();
+  await expect(page.locator('#forecast-icon-hourly')).toBeHidden();
+
+  const dailyOrder = await page
+    .locator('.forecast-day')
+    .first()
+    .locator('.forecast-day__content > *')
+    .evaluateAll((elements) => elements.map((element) => element.classList[0]));
+  expect(dailyOrder).toEqual([
+    'forecast-day__temp',
+    'forecast-day__temp',
+    'forecast-day__icon',
+    'forecast-day__rain',
+    'forecast-day__label',
+    'forecast-day__date',
+  ]);
+
   await expect(page.locator('#coords')).toBeHidden();
   await expect(page.locator('#cache-badges')).toBeHidden();
   await expect(page.locator('#live-status')).toContainText('Rosario');
@@ -51,7 +68,34 @@ test('carga el pronóstico horario solo al abrir la pestaña y lo cachea', async
   await page.getByRole('tab', { name: 'Por hora' }).click();
   await expect(page.locator('#forecast-hourly-panel')).toBeVisible();
   await expect(page.locator('.hourly-hour')).toHaveCount(24);
+  await expect(page.locator('#forecast-icon-hourly')).toBeVisible();
+  await expect(page.locator('#forecast-icon-daily')).toBeHidden();
   expect(hourlyRequests).toBe(1);
+
+  const hourlyOrder = await page
+    .locator('.hourly-hour')
+    .first()
+    .locator('.hourly-hour__content > *')
+    .evaluateAll((elements) => elements.map((element) => element.classList[0]));
+  expect(hourlyOrder).toEqual([
+    'hourly-hour__temp',
+    'forecast-day__icon',
+    'hourly-hour__rain',
+    'hourly-hour__time',
+  ]);
+
+  const iconColors = await page
+    .locator('.hourly-hour .weather-icon--rain')
+    .first()
+    .evaluate((icon) => {
+      const rain = icon.querySelector('.weather-icon__rain');
+      const cloud = icon.querySelector('.weather-icon__cloud');
+      return [
+        getComputedStyle(rain).color,
+        getComputedStyle(cloud).color,
+      ];
+    });
+  expect(iconColors[0]).not.toBe(iconColors[1]);
 
   const rainAnimation = await page
     .locator('.hourly-hour .weather-icon__rain')
@@ -65,6 +109,7 @@ test('carga el pronóstico horario solo al abrir la pestaña y lo cachea', async
   expect(boltAnimation).toBe('weather-bolt');
 
   await page.getByRole('tab', { name: '5 días' }).click();
+  await expect(page.locator('#forecast-icon-daily')).toBeVisible();
   await page.getByRole('tab', { name: 'Por hora' }).click();
 
   await expect(page.locator('.hourly-hour')).toHaveCount(24);
