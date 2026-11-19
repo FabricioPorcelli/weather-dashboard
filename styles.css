@@ -205,8 +205,9 @@ body {
   position: absolute;
   top: 16px;
   right: 16px;
-  bottom: 16px;
   width: var(--panel-width);
+  max-height: calc(100% - 32px);
+  max-height: calc(100dvh - 32px);
   padding: 22px;
   overflow-y: auto;
   background: var(--color-panel);
