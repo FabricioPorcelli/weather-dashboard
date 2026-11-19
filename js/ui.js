@@ -273,19 +273,9 @@ const WEATHER_ICON_PATHS = {
  */
 export function renderForecast(data) {
   retryEl.hidden = true;
-  const temperatures = data.days.flatMap((day) => [
-    day.temp_min_c,
-    day.temp_max_c,
-  ]);
-  const minTemp = Math.min(...temperatures);
-  const maxTemp = Math.max(...temperatures);
-  const range = Math.max(maxTemp - minTemp, 1);
-
   daysEl.replaceChildren(
     ...data.days.map((day, index) =>
       createDayItem(day, {
-        minTemp,
-        range,
         index,
         isToday: index === 0,
       }),
@@ -453,19 +443,11 @@ export function renderHourly(data) {
       content.className = 'hourly-hour__content';
       content.setAttribute('aria-hidden', 'true');
 
-      const timeEl = document.createElement('span');
-      timeEl.className = 'hourly-hour__time';
-      timeEl.textContent = time;
-
-      const icon = createWeatherIcon(hour.conditions ?? '');
       const tempEl = document.createElement('span');
       tempEl.className = 'hourly-hour__temp';
       tempEl.textContent = `${Math.round(hour.temperature_c)}°`;
 
-      const conditionsEl = document.createElement('span');
-      conditionsEl.className = 'hourly-hour__conditions';
-      conditionsEl.textContent = hour.conditions;
-      conditionsEl.title = hour.conditions;
+      const icon = createWeatherIcon(hour.conditions ?? '');
 
       const rainEl = document.createElement('span');
       rainEl.className = 'hourly-hour__rain';
@@ -473,7 +455,11 @@ export function renderHourly(data) {
       rainDot.className = 'forecast-day__rain-dot';
       rainEl.append(rainDot, document.createTextNode(`${rain}%`));
 
-      content.append(timeEl, icon, tempEl, conditionsEl, rainEl);
+      const timeEl = document.createElement('span');
+      timeEl.className = 'hourly-hour__time';
+      timeEl.textContent = time;
+
+      content.append(tempEl, icon, rainEl, timeEl);
       card.append(content);
       row.append(card);
     });
@@ -499,7 +485,7 @@ function formatHourLabel(datetime) {
  * @param {object} context
  * @returns {HTMLLIElement}
  */
-function createDayItem(day, { minTemp, range, index, isToday }) {
+function createDayItem(day, { index, isToday }) {
   const item = document.createElement('li');
   item.className = 'forecast-day';
   item.classList.toggle('forecast-day--today', isToday);
@@ -519,38 +505,15 @@ function createDayItem(day, { minTemp, range, index, isToday }) {
   content.className = 'forecast-day__content';
   content.setAttribute('aria-hidden', 'true');
 
-  const label = document.createElement('span');
-  label.className = 'forecast-day__label';
-  label.textContent = dayName;
-
-  const date = document.createElement('span');
-  date.className = 'forecast-day__date';
-  date.textContent = formatDayNumber(day.date);
-
-  const icon = createWeatherIcon(day.conditions);
-
   const max = document.createElement('span');
   max.className = 'forecast-day__temp forecast-day__temp--max';
   max.textContent = `${Math.round(day.temp_max_c)}°`;
 
-  const bar = document.createElement('div');
-  bar.className = 'forecast-day__bar';
-
-  const fill = document.createElement('span');
-  fill.className = 'forecast-day__range';
-  const bottom = ((day.temp_min_c - minTemp) / range) * 100;
-  const height = Math.max(
-    ((day.temp_max_c - day.temp_min_c) / range) * 100,
-    8,
-  );
-  const visibleBottom = Math.min(Math.max(bottom, 0), 100 - height);
-  fill.style.setProperty('--bar-bottom', `${visibleBottom}%`);
-  fill.style.setProperty('--bar-height', `${height}%`);
-  bar.append(fill);
-
   const min = document.createElement('span');
   min.className = 'forecast-day__temp forecast-day__temp--min';
   min.textContent = `${Math.round(day.temp_min_c)}°`;
+
+  const icon = createWeatherIcon(day.conditions);
 
   const rain = document.createElement('span');
   rain.className = 'forecast-day__rain';
@@ -561,7 +524,15 @@ function createDayItem(day, { minTemp, range, index, isToday }) {
     document.createTextNode(`${day.precipitation_probability}%`),
   );
 
-  content.append(label, date, icon, max, bar, min, rain);
+  const label = document.createElement('span');
+  label.className = 'forecast-day__label';
+  label.textContent = dayName;
+
+  const date = document.createElement('span');
+  date.className = 'forecast-day__date';
+  date.textContent = formatDayNumber(day.date);
+
+  content.append(max, min, icon, rain, label, date);
   item.append(content);
   return item;
 }
