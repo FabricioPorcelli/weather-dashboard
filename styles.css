@@ -635,6 +635,27 @@ body {
   margin-bottom: 12px;
 }
 
+.forecast-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.forecast-heading__icon {
+  display: inline-flex;
+  color: var(--color-accent);
+}
+
+.forecast-heading__svg {
+  width: 20px;
+  height: 20px;
+}
+
+.forecast-heading__svg--hidden {
+  display: none;
+}
+
 .card__title {
   margin: 0;
   font-size: 1.08rem;

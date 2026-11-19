@@ -22,6 +22,8 @@ const precipEl = document.querySelector('#current-precip');
 const updatedEl = document.querySelector('#current-updated');
 const forecastCardEl = document.querySelector('#forecast-card');
 const forecastTabs = [...document.querySelectorAll('.forecast-tab')];
+const dailyHeadingIconEl = document.querySelector('#forecast-icon-daily');
+const hourlyHeadingIconEl = document.querySelector('#forecast-icon-hourly');
 const dailyPanelEl = document.querySelector('#forecast-daily-panel');
 const hourlyPanelEl = document.querySelector('#forecast-hourly-panel');
 const hourlyDaysEl = document.querySelector('#hourly-days');
@@ -354,6 +356,14 @@ function activateForecastTab(tabName, notify) {
 
   dailyPanelEl.hidden = tabName !== 'daily';
   hourlyPanelEl.hidden = tabName !== 'hourly';
+  dailyHeadingIconEl.classList.toggle(
+    'forecast-heading__svg--hidden',
+    tabName !== 'daily',
+  );
+  hourlyHeadingIconEl.classList.toggle(
+    'forecast-heading__svg--hidden',
+    tabName !== 'hourly',
+  );
 
   if (tabName === 'hourly' && notify) {
     hourlyRequestCallback?.();

@@ -201,7 +201,40 @@
         <!-- Pronóstico: tira de 5 días con barras de rango de temperatura -->
         <section class="card card--forecast" id="forecast-card" hidden>
           <div class="forecast-header">
-            <h2 class="card__title">Pronóstico</h2>
+            <div class="forecast-heading">
+              <span class="forecast-heading__icon" aria-hidden="true">
+                <svg
+                  class="forecast-heading__svg"
+                  id="forecast-icon-daily"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <rect x="3" y="5" width="18" height="16" rx="3"></rect>
+                  <path d="M8 3v4M16 3v4M3 10h18"></path>
+                  <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path>
+                </svg>
+                <svg
+                  class="forecast-heading__svg forecast-heading__svg--hidden"
+                  id="forecast-icon-hourly"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <circle cx="12" cy="12" r="8.5"></circle>
+                  <path d="M12 7.5V12l3 2"></path>
+                </svg>
+              </span>
+              <h2 class="card__title">Pronóstico</h2>
+            </div>
             <div class="forecast-tabs" role="tablist" aria-label="Vista del pronóstico">
               <button
                 class="forecast-tab"
