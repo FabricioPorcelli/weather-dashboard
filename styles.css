@@ -112,6 +112,44 @@ body {
   font-family: inherit;
 }
 
+/* Atribución de OpenStreetMap como badge legible sobre el mapa. */
+.leaflet-control-attribution {
+  padding: 3px 8px;
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(6px);
+}
+
+.leaflet-control-attribution a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.leaflet-control-attribution a:hover {
+  text-decoration: underline;
+}
+
+.leaflet-top .leaflet-control-attribution {
+  margin-top: 8px;
+}
+
+.leaflet-right .leaflet-control-attribution {
+  margin-right: 8px;
+}
+
+.leaflet-bottom .leaflet-control-attribution {
+  margin-bottom: 8px;
+}
+
+.leaflet-left .leaflet-control-attribution {
+  margin-left: 8px;
+}
+
 /* Scrollbar alineado con la paleta, en panel y conversación. */
 .panel,
 .chat__messages,

@@ -10,7 +10,7 @@ import { COORD_DECIMALS, INITIAL_VIEW } from './config.js';
 
 const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>';
 
 /** HTML estático del marcador: un punto con un pulso suave. */
 const LOCATION_ICON_HTML =
@@ -42,6 +42,17 @@ export function initMap(onLocationSelected, theme) {
     maxZoom: 19,
     attribution: TILE_ATTRIBUTION,
   }).addTo(map);
+
+  // En móvil la hoja inferior tapa la esquina inferior derecha; movemos la
+  // atribución arriba a la derecha. En escritorio queda abajo a la izquierda.
+  const mobileAttribution = window.matchMedia('(max-width: 640px)');
+  const syncAttributionPosition = () => {
+    map.attributionControl.setPosition(
+      mobileAttribution.matches ? 'topright' : 'bottomleft',
+    );
+  };
+  syncAttributionPosition();
+  mobileAttribution.addEventListener('change', syncAttributionPosition);
 
   setMapTheme(theme);
 

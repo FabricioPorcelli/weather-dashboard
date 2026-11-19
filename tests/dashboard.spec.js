@@ -44,6 +44,14 @@ test('busca una ciudad y muestra el clima y el pronóstico', async ({ page }) =>
   await expect(page.locator('#current-updated')).toHaveText(
     /Actualizado (ahora|hace)/,
   );
+  await expect(page.locator('.leaflet-control-attribution')).toContainText(
+    'OpenStreetMap contributors',
+  );
+  await expect(
+    page.locator(
+      '.leaflet-control-attribution a[href="https://www.openstreetmap.org/copyright"]',
+    ),
+  ).toBeVisible();
 });
 
 test('carga el pronóstico horario junto con la ciudad y lo cachea', async ({
