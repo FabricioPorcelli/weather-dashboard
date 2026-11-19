@@ -1,0 +1,130 @@
+import { test, expect } from '@playwright/test';
+import {
+  blockExtras,
+  currentWeather,
+  mockGeocoding,
+  mockWeatherApi,
+  searchRosario,
+} from './helpers.js';
+
+test.beforeEach(async ({ page }) => {
+  await blockExtras(page);
+  await mockWeatherApi(page);
+  await mockGeocoding(page);
+});
+
+test('busca una ciudad y muestra el clima y el pronóstico', async ({ page }) => {
+  await page.goto('/');
+  await searchRosario(page);
+
+  await expect(page.locator('#current-location')).toHaveText('Rosario');
+  await expect(page.locator('#current-temp')).toHaveText('31');
+  await expect(page.locator('#forecast-card')).toBeVisible();
+  await expect(page.locator('.forecast-day')).toHaveCount(5);
+  await expect(page.locator('#coords')).toBeHidden();
+  await expect(page.locator('#cache-badges')).toBeHidden();
+  await expect(page.locator('#live-status')).toContainText('Rosario');
+});
+
+test('carga el clima al hacer clic en el mapa', async ({ page }) => {
+  await page.goto('/');
+
+  await page.locator('#map').click({ position: { x: 500, y: 350 } });
+
+  await expect(page.locator('#current-card')).toBeVisible();
+  await expect(page.locator('#current-location')).toHaveText('Rosario');
+  await expect(page.locator('#current-temp')).toHaveText('31');
+});
+
+test('usa Open-Meteo cuando Nominatim falla', async ({ page }) => {
+  await page.unroute('https://nominatim.openstreetmap.org/search**');
+  await page.unroute('https://nominatim.openstreetmap.org/reverse**');
+  await mockGeocoding(page, { nominatimFails: true });
+
+  await page.goto('/');
+  await searchRosario(page);
+
+  await expect(page.locator('#current-location')).toHaveText('Rosario');
+  await expect(page.locator('#current-card')).toBeVisible();
+});
+
+test('cambia el tema y lo conserva al recargar', async ({ page }) => {
+  await page.goto('/');
+
+  const html = page.locator('html');
+  const initialTheme = await html.getAttribute('data-theme');
+  const nextTheme = initialTheme === 'dark' ? 'light' : 'dark';
+
+  await page.locator('#theme-toggle').click();
+  await expect(html).toHaveAttribute('data-theme', nextTheme);
+
+  await page.reload();
+  await expect(html).toHaveAttribute('data-theme', nextTheme);
+});
+
+test('usa la ubicación del navegador', async ({ page, context }) => {
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation({ latitude: -32.9594, longitude: -60.6617 });
+
+  await page.goto('/');
+  await page.locator('#locate-button').click();
+
+  await expect(page.locator('#current-card')).toBeVisible();
+  await expect(page.locator('#current-location')).toHaveText('Rosario');
+});
+
+test('abre el chat, muestra sugerencias y lo cierra tocando el marcador', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await searchRosario(page);
+
+  await page.locator('#chat-open').click();
+  await expect(page.locator('.leaflet-popup')).toHaveCount(1);
+  await expect(page.locator('.chat__suggestions')).toBeVisible();
+
+  await page.locator('.location-marker').dispatchEvent('click');
+  await expect(page.locator('.leaflet-popup')).toHaveCount(0);
+
+  await page.locator('#chat-open').click();
+  await expect(page.locator('.leaflet-popup')).toHaveCount(1);
+});
+
+test('muestra Reintentar y recupera la consulta después de un error', async ({
+  page,
+}) => {
+  let attempts = 0;
+  await page.unroute('http://localhost:8000/v1/weather/**');
+  await page.route('http://localhost:8000/v1/weather/**', (route) => {
+    attempts += 1;
+    if (attempts === 1) {
+      return route.fulfill({
+        status: 502,
+        headers: {
+          'access-control-allow-origin': '*',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ detail: 'Proveedor caído' }),
+      });
+    }
+    return route.fulfill({
+      status: 200,
+      headers: {
+        'access-control-allow-origin': '*',
+        'content-type': 'application/json',
+        'x-cache': 'HIT',
+      },
+      body: JSON.stringify(currentWeather),
+    });
+  });
+
+  await page.goto('/');
+  await page.getByLabel('Nombre de la ciudad o pueblo').fill('Rosario');
+  await page.getByRole('button', { name: 'Buscar' }).click();
+
+  await expect(page.locator('#retry-button')).toBeVisible();
+  await page.locator('#retry-button').click();
+
+  await expect(page.locator('#current-card')).toBeVisible();
+  await expect(page.locator('#current-location')).toHaveText('Rosario');
+});
