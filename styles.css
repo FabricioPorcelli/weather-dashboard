@@ -261,10 +261,9 @@ body {
   top: 0;
   bottom: 0;
   right: 16px;
-  height: fit-content;
+  height: min(740px, calc(100% - 32px));
+  height: min(740px, calc(100dvh - 32px));
   width: var(--panel-width);
-  max-height: calc(100% - 32px);
-  max-height: calc(100dvh - 32px);
   margin-block: auto;
   padding: 22px;
   overflow-y: auto;
@@ -1494,9 +1493,8 @@ body.chat-open {
     right: 8px;
     bottom: calc(10px + env(safe-area-inset-bottom));
     width: auto;
-    height: auto;
-    max-height: 68vh;
-    max-height: min(68dvh, 620px);
+    height: min(68vh, 620px);
+    height: min(68dvh, 620px);
     margin: 0;
     padding: 10px 16px 22px;
     background: var(--color-panel);
