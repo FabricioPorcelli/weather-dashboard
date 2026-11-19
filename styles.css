@@ -272,6 +272,9 @@ body {
   border-radius: var(--radius);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
   backdrop-filter: blur(10px);
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
   /* Leaflet usa z-index 1000 en sus controles; el panel va al mismo nivel
      y, al estar después en el DOM, se dibuja por encima. */
   z-index: 1000;
@@ -498,6 +501,14 @@ body {
 }
 
 /* --- Búsqueda por ciudad -------------------------------------------------- */
+
+/* Los campos editables conservan la selección y el cursor de texto. */
+input,
+textarea {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
 
 .search {
   display: flex;

@@ -537,8 +537,37 @@ searchForm.addEventListener('submit', (event) => {
     return;
   }
   searchInput.value = city; // Muestra el texto normalizado en el input.
+  searchInput.blur(); // Cierra el teclado y quita el cursor titilante en móvil.
   searchPlace(city);
 });
+
+/**
+ * Quita el foco de un campo de texto al tocar fuera de él.
+ * Evita que el cursor siga titilando mientras se recorre el dashboard.
+ *
+ * @param {PointerEvent} event
+ */
+function blurActiveInputOnPointerDown(event) {
+  const active = document.activeElement;
+  if (
+    !(active instanceof HTMLInputElement) &&
+    !(active instanceof HTMLTextAreaElement)
+  ) {
+    return;
+  }
+
+  const target = event.target;
+  if (
+    target instanceof Element &&
+    target.closest('input, textarea, select, [contenteditable="true"]')
+  ) {
+    return;
+  }
+
+  active.blur();
+}
+
+document.addEventListener('pointerdown', blurActiveInputOnPointerDown);
 
 locateButton.addEventListener('click', () => {
   window.umami?.track('geolocation');
