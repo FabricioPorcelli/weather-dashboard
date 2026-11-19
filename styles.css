@@ -930,9 +930,61 @@ body {
 }
 
 .hourly-hour .forecast-day__icon {
-  width: 18px;
-  height: 18px;
-  margin: 1px 0;
+  width: 30px;
+  height: 30px;
+  margin: 2px 0;
+}
+
+/* Animaciones dentro de los íconos: lluvia y rayo. */
+.weather-icon__rain {
+  animation: weather-rain 1s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.weather-icon__rain--2 {
+  animation-delay: 0.18s;
+}
+
+.weather-icon__rain--3 {
+  animation-delay: 0.36s;
+}
+
+.weather-icon__bolt {
+  animation: weather-bolt 2.8s ease-in-out infinite;
+}
+
+@keyframes weather-rain {
+  0% {
+    opacity: 0;
+    transform: translateY(-1px);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes weather-bolt {
+  0%,
+  64%,
+  100% {
+    opacity: 1;
+  }
+  66%,
+  68% {
+    opacity: 0.15;
+  }
+  67%,
+  70% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 0.4;
+  }
 }
 
 /* --- Asistente opcional -------------------------------------------------- */
@@ -1527,6 +1579,11 @@ body.chat-open {
 
   .hourly-hour__content {
     min-height: 136px;
+  }
+
+  .hourly-hour .forecast-day__icon {
+    width: 28px;
+    height: 28px;
   }
 
   .hourly-hour__time {

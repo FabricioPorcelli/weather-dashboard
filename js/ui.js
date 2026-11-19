@@ -245,11 +245,15 @@ const WEATHER_ICON_PATHS = {
     '<path d="M17.5 19H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 9.5a4.75 4.75 0 0 1-.5 9.5Z"></path>',
   rain: `
     <path d="M17.5 16H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 6.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
-    <path d="M8 19v2M12 19v2M16 19v2"></path>
+    <path class="weather-icon__rain weather-icon__rain--1" d="M8 19v2"></path>
+    <path class="weather-icon__rain weather-icon__rain--2" d="M12 19v2"></path>
+    <path class="weather-icon__rain weather-icon__rain--3" d="M16 19v2"></path>
   `,
   storm: `
     <path d="M17.5 15H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 5.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
-    <path d="m13 16-2 3h3l-1 3"></path>
+    <path class="weather-icon__bolt" d="m13 16-2 3h3l-1 3"></path>
+    <path class="weather-icon__rain weather-icon__rain--1" d="M8 19v2"></path>
+    <path class="weather-icon__rain weather-icon__rain--3" d="M16 19v2"></path>
   `,
   snow: `
     <path d="M17.5 15H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 5.5a4.75 4.75 0 0 1-.5 9.5Z"></path>

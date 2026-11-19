@@ -26,9 +26,14 @@ export const hourlyForecast = {
       humidity: 58,
       precipitation_mm: 0,
       precipitation_probability: index < 4 ? 52 : 10,
-      conditions: index < 4 ? 'Lluvia' : 'Parcialmente nublado',
+      conditions:
+        index === 4
+          ? 'Tormenta'
+          : index < 4
+            ? 'Lluvia'
+            : 'Parcialmente nublado',
       wind_speed_kmh: 8,
-      icon: index < 4 ? 'rain' : 'partly-cloudy-day',
+      icon: index === 4 ? 'storm' : index < 4 ? 'rain' : 'partly-cloudy-day',
     };
   }),
 };

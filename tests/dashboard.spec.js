@@ -53,6 +53,17 @@ test('carga el pronóstico horario solo al abrir la pestaña y lo cachea', async
   await expect(page.locator('.hourly-hour')).toHaveCount(24);
   expect(hourlyRequests).toBe(1);
 
+  const rainAnimation = await page
+    .locator('.hourly-hour .weather-icon__rain')
+    .first()
+    .evaluate((element) => getComputedStyle(element).animationName);
+  const boltAnimation = await page
+    .locator('.hourly-hour .weather-icon__bolt')
+    .first()
+    .evaluate((element) => getComputedStyle(element).animationName);
+  expect(rainAnimation).toBe('weather-rain');
+  expect(boltAnimation).toBe('weather-bolt');
+
   await page.getByRole('tab', { name: '5 días' }).click();
   await page.getByRole('tab', { name: 'Por hora' }).click();
 
