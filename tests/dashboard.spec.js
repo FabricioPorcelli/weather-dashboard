@@ -202,11 +202,19 @@ test('cambia el tema y lo conserva al recargar', async ({ page }) => {
   await page.goto('/');
 
   const html = page.locator('html');
+  const attribution = page.locator('.leaflet-control-attribution');
+  await expect(attribution).toBeVisible();
   const initialTheme = await html.getAttribute('data-theme');
   const nextTheme = initialTheme === 'dark' ? 'light' : 'dark';
 
   await page.locator('#theme-toggle').click();
   await expect(html).toHaveAttribute('data-theme', nextTheme);
+  await expect(attribution).toHaveCSS(
+    'background-color',
+    nextTheme === 'dark'
+      ? 'rgba(17, 17, 17, 0.94)'
+      : 'rgba(243, 238, 227, 0.96)',
+  );
 
   await page.reload();
   await expect(html).toHaveAttribute('data-theme', nextTheme);

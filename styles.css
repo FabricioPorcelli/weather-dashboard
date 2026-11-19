@@ -113,7 +113,7 @@ body {
 }
 
 /* Atribución de OpenStreetMap como badge legible sobre el mapa. */
-.leaflet-control-attribution {
+.leaflet-container .leaflet-control-attribution {
   padding: 3px 8px;
   color: var(--color-muted);
   font-size: 0.68rem;
@@ -125,12 +125,12 @@ body {
   backdrop-filter: blur(6px);
 }
 
-.leaflet-control-attribution a {
+.leaflet-container .leaflet-control-attribution a {
   color: var(--color-text);
   text-decoration: none;
 }
 
-.leaflet-control-attribution a:hover {
+.leaflet-container .leaflet-control-attribution a:hover {
   text-decoration: underline;
 }
 
