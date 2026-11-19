@@ -143,7 +143,7 @@ export function openChatPopup(element, onClose = null) {
     chatPopupCloseHandler = null;
   }
 
-  const popup = marker.bindPopup(element, {
+  marker.bindPopup(element, {
     className: 'chat-popup',
     maxWidth,
     minWidth: Math.min(380, maxWidth),
@@ -153,6 +153,7 @@ export function openChatPopup(element, onClose = null) {
     autoPan: false,
     offset: [0, -6],
   });
+  const popup = marker.getPopup();
 
   chatPopupCloseHandler = () => {
     onClose?.();
@@ -169,7 +170,7 @@ export function openChatPopup(element, onClose = null) {
   };
 
   marker.once('popupclose', chatPopupCloseHandler);
-  popup.openPopup();
+  marker.openPopup();
 
   // Centra el popup en la pantalla para que no quede cortado por arriba.
   requestAnimationFrame(centerChatPopup);

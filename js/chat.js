@@ -261,9 +261,13 @@ function openMobileChat() {
  * nativa de Leaflet.
  */
 function handlePopupClosed() {
-  if (elements && !elements.panel.classList.contains('chat-panel--mobile')) {
-    elements.panel.hidden = true;
+  if (!elements || elements.panel.classList.contains('chat-panel--mobile')) {
+    return;
   }
+
+  elements.panel.hidden = true;
+  // Fuerza la limpieza del contenedor cuando el cierre viene del marcador.
+  closePopup?.();
 }
 
 /**
