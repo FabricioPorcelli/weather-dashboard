@@ -345,6 +345,15 @@ const WEATHER_ICON_PATHS = {
       <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.42-1.42"></path>
     </g>
   `,
+  partly: `
+    <g class="weather-icon__sun">
+      <circle cx="8" cy="8" r="3.2"></circle>
+      <path d="M8 2.2v1.4M8 12.4v1.4M2.2 8h1.4M12.4 8h1.4M3.9 3.9l1 1M11.1 11.1l1 1M3.9 12.1l1-1M11.1 4.9l1-1"></path>
+    </g>
+    <g transform="translate(4.5 6.5) scale(0.72)">
+      <path class="weather-icon__cloud" d="M17.5 19H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 9.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
+    </g>
+  `,
   cloud:
     '<path class="weather-icon__cloud" d="M17.5 19H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 9.5a4.75 4.75 0 0 1-.5 9.5Z"></path>',
   rain: `
@@ -364,6 +373,24 @@ const WEATHER_ICON_PATHS = {
     <path class="weather-icon__snow" d="M8 19h.01M12 19h.01M16 19h.01M8 22h.01M12 22h.01M16 22h.01"></path>
   `,
   fog: '<path class="weather-icon__fog" d="M4 10h16M4 14h16M4 18h10"></path>',
+  moon: `
+    <path class="weather-icon__moon" d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"></path>
+  `,
+  'partly-night': `
+    <g transform="translate(-2 -1) scale(0.7)">
+      <g class="weather-icon__moon">
+        <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"></path>
+      </g>
+    </g>
+    <g transform="translate(4.5 6.5) scale(0.72)">
+      <path class="weather-icon__cloud" d="M17.5 19H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 9.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
+    </g>
+  `,
+  wind: `
+    <path class="weather-icon__wind" d="M3 8h11a3 3 0 1 0-3-3"></path>
+    <path class="weather-icon__wind" d="M3 12h15a3 3 0 1 1-3 3"></path>
+    <path class="weather-icon__wind" d="M3 16h8"></path>
+  `,
 };
 
 /**
@@ -553,7 +580,7 @@ export function renderHourly(data) {
       tempEl.className = 'hourly-hour__temp';
       tempEl.textContent = `${Math.round(hour.temperature_c)}°`;
 
-      const icon = createWeatherIcon(hour.conditions ?? '');
+      const icon = createWeatherIcon(hour.conditions ?? '', hour.icon ?? '');
 
       const rainEl = document.createElement('span');
       rainEl.className = 'hourly-hour__rain';
@@ -620,7 +647,7 @@ function createDayItem(day, { index, isToday }) {
   min.className = 'forecast-day__temp forecast-day__temp--min';
   min.textContent = `${Math.round(day.temp_min_c)}°`;
 
-  const icon = createWeatherIcon(day.conditions);
+  const icon = createWeatherIcon(day.conditions, day.icon ?? '');
 
   const rain = document.createElement('span');
   rain.className = 'forecast-day__rain';
@@ -648,9 +675,10 @@ function createDayItem(day, { index, isToday }) {
  * Crea un ícono SVG decorativo según las condiciones del día.
  *
  * @param {string} conditions
+ * @param {string} [icon] Código de ícono del proveedor (por ejemplo, clear-day).
  * @returns {SVGSVGElement}
  */
-function createWeatherIcon(conditions) {
+function createWeatherIcon(conditions, icon = '') {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('fill', 'none');
@@ -660,7 +688,7 @@ function createWeatherIcon(conditions) {
   svg.setAttribute('stroke-linejoin', 'round');
   svg.setAttribute('aria-hidden', 'true');
   svg.setAttribute('focusable', 'false');
-  const kind = weatherIconKind(conditions);
+  const kind = weatherIconKind(conditions, icon);
   svg.classList.add('forecast-day__icon', `weather-icon--${kind}`);
   // El contenido es SVG estático; no se interpola texto de la API.
   svg.innerHTML = WEATHER_ICON_PATHS[kind];
@@ -668,29 +696,76 @@ function createWeatherIcon(conditions) {
 }
 
 /**
- * Traduce las condiciones de la API a uno de los íconos disponibles.
+ * Traduce el código del proveedor o las condiciones a uno de los íconos.
  *
  * @param {string} conditions
+ * @param {string} [icon]
  * @returns {keyof typeof WEATHER_ICON_PATHS}
  */
-function weatherIconKind(conditions) {
-  const value = conditions.toLocaleLowerCase('es');
-  if (/tormenta|trueno|rayo/.test(value)) {
+function weatherIconKind(conditions, icon = '') {
+  const code = String(icon).toLocaleLowerCase('en');
+  if (code.includes('thunder')) {
     return 'storm';
   }
-  if (/nieve|nevada|granizo/.test(value)) {
+  if (
+    code.includes('snow') ||
+    code.includes('sleet') ||
+    code.includes('hail')
+  ) {
     return 'snow';
   }
-  if (/lluvia|llovizna|chubasco/.test(value)) {
+  if (
+    code.includes('rain') ||
+    code.includes('shower') ||
+    code.includes('drizzle')
+  ) {
     return 'rain';
   }
-  if (/niebla|neblina|bruma/.test(value)) {
+  if (code.includes('fog') || code.includes('mist')) {
     return 'fog';
   }
-  if (/nublado|nubes|nuboso|parcialmente/.test(value)) {
+  if (code.includes('wind')) {
+    return 'wind';
+  }
+  if (code.includes('partly')) {
+    return code.includes('night') ? 'partly-night' : 'partly';
+  }
+  if (code === 'sun' || code.includes('clear')) {
+    return code.includes('night') ? 'moon' : 'sun';
+  }
+  if (code.includes('cloud')) {
     return 'cloud';
   }
-  if (/sol|despejado|clear/.test(value)) {
+
+  const value = String(conditions).toLocaleLowerCase('es');
+  if (/tormenta|trueno|rayo|thunder|storm/.test(value)) {
+    return 'storm';
+  }
+  if (/nieve|nevada|granizo|snow|sleet|hail/.test(value)) {
+    return 'snow';
+  }
+  if (
+    /lluvia|llovizna|chubasco|chaparr|aguacero|rain|drizzle|shower/.test(value)
+  ) {
+    return 'rain';
+  }
+  if (/niebla|neblina|bruma|fog|mist|haze/.test(value)) {
+    return 'fog';
+  }
+  if (/viento|ventoso|windy|wind/.test(value)) {
+    return 'wind';
+  }
+  if (
+    /parcialmente|parcial|mayormente despejado|mayormente soleado|algo nublado|poco nublado|intervalos nubosos|partly|mostly sunny|mostly clear/.test(
+      value,
+    )
+  ) {
+    return 'partly';
+  }
+  if (/nublado|nubes|nuboso|cubierto|cloud|overcast/.test(value)) {
+    return 'cloud';
+  }
+  if (/sol|soleado|despejado|clear|sunny/.test(value)) {
     return 'sun';
   }
   return 'cloud';
