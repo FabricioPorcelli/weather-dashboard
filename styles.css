@@ -19,6 +19,13 @@
   --color-surface: rgba(243, 238, 227, 0.06);
   --color-surface-strong: rgba(243, 238, 227, 0.1);
   --color-accent-soft: rgba(123, 184, 255, 0.16);
+  /* Colores de los íconos del clima. */
+  --weather-sun: #f2c14e;
+  --weather-cloud: #b9c6d6;
+  --weather-rain: #7cc4ff;
+  --weather-snow: #d6efff;
+  --weather-fog: #a6b4c4;
+  --weather-bolt: #f2c14e;
   --panel-width: 380px;
   --radius: 18px;
   color-scheme: dark;
@@ -40,6 +47,12 @@
   --color-surface: rgba(17, 17, 17, 0.045);
   --color-surface-strong: rgba(17, 17, 17, 0.08);
   --color-accent-soft: rgba(31, 95, 204, 0.1);
+  --weather-sun: #c88700;
+  --weather-cloud: #667789;
+  --weather-rain: #1f6fc0;
+  --weather-snow: #3f8fbd;
+  --weather-fog: #667789;
+  --weather-bolt: #c88700;
   color-scheme: light;
 }
 
@@ -958,8 +971,23 @@ body {
   margin: 2px 0;
 }
 
-/* Animaciones dentro de los íconos: lluvia y rayo. */
+/* Colores y animaciones de los íconos del clima. */
+.weather-icon__sun {
+  color: var(--weather-sun);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: weather-sun-turn 22s linear infinite;
+}
+
+.weather-icon__cloud {
+  color: var(--weather-cloud);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: weather-drift 4.5s ease-in-out infinite;
+}
+
 .weather-icon__rain {
+  color: var(--weather-rain);
   animation: weather-rain 1s linear infinite;
   transform-box: fill-box;
   transform-origin: center;
@@ -974,7 +1002,20 @@ body {
 }
 
 .weather-icon__bolt {
+  color: var(--weather-bolt);
   animation: weather-bolt 2.8s ease-in-out infinite;
+}
+
+.weather-icon__snow {
+  color: var(--weather-snow);
+  animation: weather-snow 2.6s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.weather-icon__fog {
+  color: var(--weather-fog);
+  animation: weather-fog 5s ease-in-out infinite alternate;
 }
 
 @keyframes weather-rain {
@@ -1007,6 +1048,47 @@ body {
   }
   72% {
     opacity: 0.4;
+  }
+}
+
+@keyframes weather-sun-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes weather-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes weather-snow {
+  0% {
+    opacity: 0;
+    transform: translateY(-1px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+@keyframes weather-fog {
+  from {
+    opacity: 0.65;
+    transform: translateX(-1.2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(1.2px);
   }
 }
 

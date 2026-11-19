@@ -240,28 +240,30 @@ window.setInterval(updateUpdatedLabel, 60000);
 /** Íconos SVG estáticos para acompañar cada día del pronóstico. */
 const WEATHER_ICON_PATHS = {
   sun: `
-    <circle cx="12" cy="12" r="4"></circle>
-    <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.42-1.42"></path>
+    <g class="weather-icon__sun">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.42-1.42"></path>
+    </g>
   `,
   cloud:
-    '<path d="M17.5 19H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 9.5a4.75 4.75 0 0 1-.5 9.5Z"></path>',
+    '<path class="weather-icon__cloud" d="M17.5 19H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 9.5a4.75 4.75 0 0 1-.5 9.5Z"></path>',
   rain: `
-    <path d="M17.5 16H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 6.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
+    <path class="weather-icon__cloud" d="M17.5 16H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 6.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
     <path class="weather-icon__rain weather-icon__rain--1" d="M8 19v2"></path>
     <path class="weather-icon__rain weather-icon__rain--2" d="M12 19v2"></path>
     <path class="weather-icon__rain weather-icon__rain--3" d="M16 19v2"></path>
   `,
   storm: `
-    <path d="M17.5 15H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 5.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
+    <path class="weather-icon__cloud" d="M17.5 15H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 5.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
     <path class="weather-icon__bolt" d="m13 16-2 3h3l-1 3"></path>
     <path class="weather-icon__rain weather-icon__rain--1" d="M8 19v2"></path>
     <path class="weather-icon__rain weather-icon__rain--3" d="M16 19v2"></path>
   `,
   snow: `
-    <path d="M17.5 15H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 5.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
-    <path d="M8 19h.01M12 19h.01M16 19h.01M8 22h.01M12 22h.01M16 22h.01"></path>
+    <path class="weather-icon__cloud" d="M17.5 15H7a4.5 4.5 0 0 1-.8-8.93A6 6 0 0 1 18 5.5a4.75 4.75 0 0 1-.5 9.5Z"></path>
+    <path class="weather-icon__snow" d="M8 19h.01M12 19h.01M16 19h.01M8 22h.01M12 22h.01M16 22h.01"></path>
   `,
-  fog: '<path d="M4 10h16M4 14h16M4 18h10"></path>',
+  fog: '<path class="weather-icon__fog" d="M4 10h16M4 14h16M4 18h10"></path>',
 };
 
 /**
@@ -580,9 +582,10 @@ function createWeatherIcon(conditions) {
   svg.setAttribute('stroke-linejoin', 'round');
   svg.setAttribute('aria-hidden', 'true');
   svg.setAttribute('focusable', 'false');
-  svg.classList.add('forecast-day__icon');
+  const kind = weatherIconKind(conditions);
+  svg.classList.add('forecast-day__icon', `weather-icon--${kind}`);
   // El contenido es SVG estático; no se interpola texto de la API.
-  svg.innerHTML = WEATHER_ICON_PATHS[weatherIconKind(conditions)];
+  svg.innerHTML = WEATHER_ICON_PATHS[kind];
   return svg;
 }
 
