@@ -54,6 +54,27 @@ test('busca una ciudad y muestra el clima y el pronóstico', async ({ page }) =>
   ).toBeVisible();
 });
 
+test('quita el foco del buscador al buscar o tocar fuera del campo', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const input = page.getByLabel('Nombre de la ciudad o pueblo');
+
+  await input.fill('Rosario');
+  await input.press('Enter');
+  await expect(page.locator('#current-card')).toBeVisible();
+  await expect(input).not.toBeFocused();
+
+  await input.focus();
+  await page.locator('.panel__title').click();
+  await expect(input).not.toBeFocused();
+
+  await expect(page.locator('.panel')).toHaveCSS('cursor', 'default');
+  await expect(page.locator('.panel')).toHaveCSS('user-select', 'none');
+  await expect(input).toHaveCSS('cursor', 'text');
+  await expect(input).toHaveCSS('user-select', 'text');
+});
+
 test('carga el pronóstico horario junto con la ciudad y lo cachea', async ({
   page,
 }) => {
