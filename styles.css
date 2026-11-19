@@ -654,7 +654,7 @@ body {
   padding: 4px 8px;
   color: var(--color-muted);
   font: inherit;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   white-space: nowrap;
   background: transparent;
@@ -665,9 +665,10 @@ body {
 }
 
 .forecast-tab[aria-selected='true'] {
-  color: var(--color-text);
+  color: var(--color-accent);
   background: var(--color-bg);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  font-weight: 700;
 }
 
 .forecast-tab:focus-visible {
