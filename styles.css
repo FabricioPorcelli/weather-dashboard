@@ -152,31 +152,26 @@ body {
 
 /* Scrollbar alineado con la paleta, en panel y conversación. */
 .panel,
-.chat__messages,
-.hourly-scroll {
+.chat__messages {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
 
 .panel::-webkit-scrollbar,
-.chat__messages::-webkit-scrollbar,
-.hourly-scroll::-webkit-scrollbar {
+.chat__messages::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .panel::-webkit-scrollbar-track,
 .chat__messages::-webkit-scrollbar-track,
-.hourly-scroll::-webkit-scrollbar-track,
 .panel::-webkit-scrollbar-corner,
-.chat__messages::-webkit-scrollbar-corner,
-.hourly-scroll::-webkit-scrollbar-corner {
+.chat__messages::-webkit-scrollbar-corner {
   background: transparent;
 }
 
 .panel::-webkit-scrollbar-thumb,
-.chat__messages::-webkit-scrollbar-thumb,
-.hourly-scroll::-webkit-scrollbar-thumb {
+.chat__messages::-webkit-scrollbar-thumb {
   background: var(--color-border);
   background-clip: padding-box;
   border: 2px solid transparent;
@@ -184,10 +179,19 @@ body {
 }
 
 .panel::-webkit-scrollbar-thumb:hover,
-.chat__messages::-webkit-scrollbar-thumb:hover,
-.hourly-scroll::-webkit-scrollbar-thumb:hover {
+.chat__messages::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent);
   background-clip: padding-box;
+}
+
+/* La tira horaria se desplaza sin mostrar una barra horizontal. */
+.hourly-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hourly-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 #map {

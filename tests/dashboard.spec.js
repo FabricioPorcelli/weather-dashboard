@@ -96,6 +96,11 @@ test('carga el pronóstico horario junto con la ciudad y lo cachea', async ({
   await expect(page.locator('#forecast-icon-daily')).toBeHidden();
   expect(hourlyRequests).toBe(1);
 
+  const hourlyScrollbar = await page
+    .locator('.hourly-scroll')
+    .evaluate((element) => getComputedStyle(element).scrollbarWidth);
+  expect(hourlyScrollbar).toBe('none');
+
   const hourlyPanelHeight = await page
     .locator('#forecast-hourly-panel')
     .evaluate((element) => element.getBoundingClientRect().height);
