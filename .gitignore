@@ -20,3 +20,9 @@ __pycache__/
 # Plan
 dashboard-context.md
 plan-implementacion.md
+
+# Tests E2E (solo desarrollo)
+node_modules/
+test-results/
+playwright-report/
+blob-report/

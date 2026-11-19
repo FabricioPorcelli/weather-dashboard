@@ -1,8 +1,10 @@
 # Weather Dashboard
 
+![CI](https://github.com/FabricioPorcelli/weather-dashboard/actions/workflows/ci.yml/badge.svg)
+
 [**Probalo en vivo**](https://weather.fabricioporcelli.com.ar/) · [Cómo lo hosteo](https://portfolio.fabricioporcelli.com.ar/projects/homelab.html) · [API](https://github.com/FabricioPorcelli/weather-api) · [Asistente](https://github.com/FabricioPorcelli/weather-assistant)
 
-Dashboard de clima con mapa interactivo, pronóstico de 5 días y un asistente conversacional opcional. Está hecho con **HTML, CSS y JavaScript vanilla**, sin frameworks, sin build y sin `node_modules`.
+Dashboard de clima con mapa interactivo, pronóstico de 5 días y un asistente conversacional opcional. Está hecho con **HTML, CSS y JavaScript vanilla**, sin frameworks ni build. El runtime no tiene dependencias: los tests E2E usan Playwright solo como herramienta de desarrollo.
 
 La aplicación corre en un **self-hosted home lab**. En mi portfolio explico cómo está montada la infraestructura: [portfolio.fabricioporcelli.com.ar/projects/homelab.html](https://portfolio.fabricioporcelli.com.ar/projects/homelab.html).
 
@@ -10,12 +12,14 @@ La aplicación corre en un **self-hosted home lab**. En mi portfolio explico có
 
 ## Qué podés hacer
 
-- Elegir una ubicación tocando el mapa o buscando una ciudad o pueblo.
+- Elegir una ubicación tocando el mapa, buscando una ciudad o pueblo, o usando la ubicación del navegador.
 - Ver el clima actual: temperatura, sensación térmica, humedad, viento y precipitación.
+- Reintentar la última consulta si la API falla.
 - Consultar el pronóstico de los próximos 5 días con rangos de temperatura, íconos y probabilidad de lluvia.
 - Cambiar entre tema claro y oscuro.
 - Usar el dashboard desde la computadora o el celular.
-- En móvil, arrastrar la barra superior del panel para colapsarlo y dejar a la vista el resumen del clima.
+- En móvil, arrastrar la barra superior del panel para colapsarlo y dejar a la vista el resumen y los detalles del clima.
+- Navegar el panel y el chat con teclado; el chat móvil mantiene el foco adentro.
 - Abrir el asistente y preguntar cosas como “¿Llevo paraguas hoy?” o “¿Qué ropa me pongo?”.
 - Retomar conversaciones guardadas desde los puntos que quedan marcados en el mapa.
 
@@ -61,6 +65,18 @@ Abrí `http://localhost:5500`.
 Si usás otro puerto, agregalo a `CORS_ORIGINS` en el `.env` de la API.
 
 Para habilitar el chat, seguí las instrucciones de [weather-assistant](https://github.com/FabricioPorcelli/weather-assistant) y levantá también ese servicio.
+
+## Tests
+
+Los tests E2E cubren búsqueda con fallback, clic en el mapa, tema, geolocalización, reintento, bottom sheet móvil y apertura/cierre del chat. Mockean las APIs, así que no necesitan claves ni servicios levantados. Solo necesitan red para cargar Leaflet desde su CDN.
+
+```bash
+npm ci
+npx playwright install chromium
+npm test
+```
+
+También podés verificar la sintaxis de los módulos con `npm run check:js`. El workflow de GitHub Actions corre todo en cada push a `main` y en cada pull request.
 
 ## En vivo
 

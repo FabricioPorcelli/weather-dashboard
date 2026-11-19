@@ -350,6 +350,73 @@ body {
   color: var(--color-danger);
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.locate-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 38px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.locate-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.locate-button:hover:not(:disabled) {
+  color: var(--color-accent);
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+}
+
+.locate-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.retry-button {
+  width: 100%;
+  min-height: 38px;
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  filter: brightness(1.05);
+}
+
 /* Se conserva en el DOM y en el código, pero no se muestra al usuario. */
 .panel__coords {
   display: none;
@@ -1217,6 +1284,11 @@ body.chat-open {
   .search__button {
     min-height: 44px;
     padding: 10px 14px;
+  }
+
+  .locate-button,
+  .retry-button {
+    min-height: 44px;
   }
 
   .card {

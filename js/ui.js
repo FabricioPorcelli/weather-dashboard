@@ -8,6 +8,8 @@ import { loadTheme, saveTheme } from './storage.js';
 import { formatPlaceName, isCoordinateLabel } from './text.js';
 
 const statusEl = document.querySelector('#status');
+const liveStatusEl = document.querySelector('#live-status');
+const retryEl = document.querySelector('#retry-button');
 const coordsEl = document.querySelector('#coords');
 const cardEl = document.querySelector('#current-card');
 const locationEl = document.querySelector('#current-location');
@@ -38,13 +40,29 @@ export function setSelectedCoords(lat, lon) {
 
 /**
  * Estado de carga: mensaje en el panel y tarjeta oculta.
+ *
+ * @param {string} [message]
  */
-export function showLoading() {
+export function showLoading(message = 'Consultando la API…') {
   statusEl.classList.remove('panel__hint--error');
-  statusEl.textContent = 'Consultando la API…';
+  statusEl.textContent = message;
   cardEl.hidden = true;
   forecastCardEl.hidden = true;
   badgesEl.hidden = true;
+  retryEl.hidden = true;
+  document.dispatchEvent(new CustomEvent('weather:loading'));
+}
+
+/**
+ * Muestra un aviso sin ocultar los datos que ya están en pantalla.
+ *
+ * @param {string} text
+ * @param {boolean} [isError]
+ */
+export function showNotice(text, isError = false) {
+  statusEl.classList.toggle('panel__hint--error', isError);
+  statusEl.textContent = text;
+  retryEl.hidden = true;
 }
 
 /**
@@ -53,13 +71,17 @@ export function showLoading() {
  * a un mensaje acorde al código HTTP.
  *
  * @param {string | (Error & { status?: number })} error
+ * @param {{ retry?: boolean }} [options]
  */
-export function showError(error) {
+export function showError(error, { retry = true } = {}) {
   statusEl.classList.add('panel__hint--error');
   statusEl.textContent = typeof error === 'string' ? error : messageForError(error);
+  liveStatusEl.textContent = statusEl.textContent;
   cardEl.hidden = true;
   forecastCardEl.hidden = true;
   badgesEl.hidden = true;
+  retryEl.hidden = !retry;
+  document.dispatchEvent(new CustomEvent('weather:error'));
 }
 
 /** Mensajes de la API por código HTTP. El 404 usa el detalle que manda la API. */
@@ -99,6 +121,10 @@ export function renderCurrentWeather(data, label = null) {
   precipEl.textContent = `${data.precipitation_mm.toFixed(1)} mm`;
   updatedEl.textContent = `Actualizado: ${formatDateTime(data.updated_at)}`;
   cardEl.hidden = false;
+  retryEl.hidden = true;
+  liveStatusEl.textContent = `${locationEl.textContent}: ${Math.round(
+    data.temperature_c,
+  )} grados, ${data.conditions}.`;
 }
 
 /**
@@ -204,6 +230,7 @@ const WEATHER_ICON_PATHS = {
  * @param {object} data Respuesta de /v1/forecast/coords/...
  */
 export function renderForecast(data) {
+  retryEl.hidden = true;
   const temperatures = data.days.flatMap((day) => [
     day.temp_min_c,
     day.temp_max_c,
@@ -399,6 +426,7 @@ export function initTheme() {
  * @param {'dark' | 'light'} theme
  */
 function switchTheme(theme) {
+  window.umami?.track('theme-change', { theme });
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (prefersReducedMotion) {
@@ -513,6 +541,7 @@ export function initPanelSheet() {
     collapsibleParts.forEach((part) => {
       part.inert = collapsed;
     });
+    window.umami?.track('panel-toggle', { collapsed });
     updateHandle();
   };
 
@@ -655,11 +684,39 @@ export function initPanelSheet() {
     panel.style.height = collapsed ? `${COLLAPSED_PANEL_HEIGHT}px` : '';
   };
 
+  /**
+   * @param {KeyboardEvent} event
+   */
+  const onHandleKeyDown = (event) => {
+    if (!mobileQuery.matches) {
+      return;
+    }
+    if (event.key === 'ArrowDown' && !collapsed) {
+      event.preventDefault();
+      setCollapsed(true);
+    } else if (event.key === 'ArrowUp' && collapsed) {
+      event.preventDefault();
+      setCollapsed(false);
+    }
+  };
+
+  handle.addEventListener('pointerdown', onPointerDown);
+  handle.addEventListener('pointermove', onPointerMove);
+  handle.addEventListener('pointerup', onPointerUp);
+  const expandForRequest = () => {
+    if (mobileQuery.matches && collapsed) {
+      setCollapsed(false);
+    }
+  };
+
   handle.addEventListener('pointerdown', onPointerDown);
   handle.addEventListener('pointermove', onPointerMove);
   handle.addEventListener('pointerup', onPointerUp);
   handle.addEventListener('pointercancel', onPointerCancel);
   handle.addEventListener('click', onClick);
+  handle.addEventListener('keydown', onHandleKeyDown);
+  document.addEventListener('weather:loading', expandForRequest);
+  document.addEventListener('weather:error', expandForRequest);
   mobileQuery.addEventListener('change', onMobileChange);
   window.addEventListener('resize', onResize);
   updateHandle();

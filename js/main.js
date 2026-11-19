@@ -18,7 +18,7 @@ import {
   resumeConversation,
   setChatLocation,
 } from './chat.js';
-import { CITY_ZOOM } from './config.js';
+import { CITY_ZOOM, COORD_DECIMALS } from './config.js';
 import { geocodeCity, reverseGeocode } from './geocode.js';
 import {
   centerOn,
@@ -46,10 +46,13 @@ import {
   setSelectedCoords,
   showError,
   showLoading,
+  showNotice,
 } from './ui.js';
 
 const searchForm = document.querySelector('#search-form');
 const searchInput = document.querySelector('#search-input');
+const locateButton = document.querySelector('#locate-button');
+const retryButton = document.querySelector('#retry-button');
 
 /** Número de la última petición; permite descartar respuestas que llegan tarde. */
 let requestId = 0;
@@ -62,6 +65,9 @@ let currentLocation = null;
  * para no repetirla. Se limpia cuando la consulta falla, así se puede reintentar.
  */
 let lastQueryKey = null;
+
+/** Acción que ejecuta el botón “Reintentar” después de un error. */
+let lastRetryAction = null;
 
 /**
  * Devuelve un nombre de lugar utilizable, descartando coordenadas viejas.
@@ -153,6 +159,7 @@ async function resumeFromAnchor(anchor) {
   resumeConversation(anchor);
   setChatLocation(location);
   openChatWindow();
+  lastRetryAction = () => resumeFromAnchor(anchor);
 
   const current = await loadWeather(
     getCurrentWeather(anchor.lat, anchor.lon),
@@ -204,12 +211,20 @@ document.addEventListener('themechange', (event) => {
   setMapTheme(event.detail.theme);
 });
 
-initMap(async (lat, lon) => {
+/**
+ * Consulta el clima para un par de coordenadas y actualiza todo el panel.
+ *
+ * @param {number} lat
+ * @param {number} lon
+ * @param {{ force?: boolean }} [options]
+ */
+async function selectCoordinates(lat, lon, { force = false } = {}) {
   const queryKey = `coords:${lat},${lon}`;
-  if (queryKey === lastQueryKey) {
+  if (!force && queryKey === lastQueryKey) {
     return; // Misma celda (~1 km): ya se mostró o se está pidiendo.
   }
   lastQueryKey = queryKey;
+  lastRetryAction = () => selectCoordinates(lat, lon, { force: true });
 
   setSelectedCoords(lat, lon);
   const labelPromise = reverseGeocode(lat, lon);
@@ -242,25 +257,28 @@ initMap(async (lat, lon) => {
   currentLocation = { lat, lon, label: placeLabel };
   setChatLocation(currentLocation);
   saveLastLocation({ lat, lon, label: placeLabel, zoom: getZoom() });
+  lastRetryAction = null;
+}
+
+initMap(async (lat, lon) => {
+  window.umami?.track('map-click');
+  await selectCoordinates(lat, lon);
 }, initialTheme);
 
 refreshChatAnchors();
 
-searchForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  const city = formatPlaceName(searchInput.value);
-  if (!city) {
-    showError('Escribí el nombre de un lugar para buscar.');
-    return;
-  }
-  searchInput.value = city; // Muestra el texto normalizado en el input.
-
+/**
+ * Busca un lugar por nombre y actualiza el mapa y el panel.
+ *
+ * @param {string} city
+ */
+async function searchPlace(city) {
   const queryKey = `city:${city.toLowerCase()}`;
   if (queryKey === lastQueryKey) {
     return; // Ya se está mostrando esa ciudad.
   }
   lastQueryKey = queryKey;
+  lastRetryAction = () => searchPlace(city);
 
   showLoading();
 
@@ -303,12 +321,68 @@ searchForm.addEventListener('submit', async (event) => {
       label: placeLabel,
       zoom: CITY_ZOOM,
     });
+    lastRetryAction = null;
+    window.umami?.track('search');
   } catch (error) {
     if (lastQueryKey === queryKey) {
       lastQueryKey = null;
     }
     showError(error);
   }
+}
+
+searchForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  const city = formatPlaceName(searchInput.value);
+  if (!city) {
+    showError('Escribí el nombre de un lugar para buscar.', { retry: false });
+    return;
+  }
+  searchInput.value = city; // Muestra el texto normalizado en el input.
+  searchPlace(city);
+});
+
+locateButton.addEventListener('click', () => {
+  window.umami?.track('geolocation');
+
+  if (!navigator.geolocation) {
+    showError('Tu navegador no permite obtener la ubicación.', { retry: false });
+    return;
+  }
+
+  locateButton.disabled = true;
+  showNotice('Buscando tu ubicación…');
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      locateButton.disabled = false;
+      const lat = Number(position.coords.latitude.toFixed(COORD_DECIMALS));
+      const lon = Number(position.coords.longitude.toFixed(COORD_DECIMALS));
+
+      centerOn(lat, lon, CITY_ZOOM);
+      placeMarker(lat, lon);
+      selectCoordinates(lat, lon, { force: true });
+    },
+    (error) => {
+      locateButton.disabled = false;
+      lastRetryAction = null;
+      const message =
+        error.code === error.PERMISSION_DENIED
+          ? 'No diste permiso para usar tu ubicación. Podés habilitarlo desde el navegador.'
+          : 'No pudimos obtener tu ubicación. Probá de nuevo.';
+      showNotice(message, true);
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+  );
+});
+
+retryButton.addEventListener('click', () => {
+  if (!lastRetryAction) {
+    return;
+  }
+  window.umami?.track('retry');
+  lastRetryAction();
 });
 
 /**
@@ -330,6 +404,8 @@ async function restoreLastLocation() {
   setSelectedCoords(saved.lat, saved.lon);
   currentLocation = { lat: saved.lat, lon: saved.lon, label: fallbackLabel };
   setChatLocation(currentLocation);
+  lastRetryAction = () =>
+    selectCoordinates(saved.lat, saved.lon, { force: true });
 
   const current = await loadWeather(
     getCurrentWeather(saved.lat, saved.lon),

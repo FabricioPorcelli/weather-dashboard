@@ -59,6 +59,7 @@
       type="button"
       aria-label="Colapsar panel"
       aria-expanded="true"
+      aria-controls="current-card"
     >
       <span class="panel__handle-grip" aria-hidden="true"></span>
     </button>
@@ -124,7 +125,26 @@
       <button class="search__button" type="submit">Buscar</button>
     </form>
 
+    <button class="locate-button" id="locate-button" type="button">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>
+      </svg>
+      Usar mi ubicación
+    </button>
+
     <p class="panel__hint" id="status" aria-live="polite">Elegí un punto en el mapa o buscá una ciudad o pueblo.</p>
+    <button class="retry-button" id="retry-button" type="button" hidden>
+      Reintentar
+    </button>
     <p class="panel__coords" id="coords" hidden aria-hidden="true"></p>
 
     <!-- Estado de caché de la API: se conserva en el código, pero no se muestra. -->
@@ -191,6 +211,8 @@
     </div>
 
   </aside>
+
+  <p class="sr-only" id="live-status" aria-live="polite"></p>
 
   <!-- Chat emergente: se inserta en un popup de Leaflet junto al marcador. -->
   <section class="chat-panel" id="chat-panel" hidden aria-label="Preguntas sobre el clima">

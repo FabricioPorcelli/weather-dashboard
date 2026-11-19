@@ -227,6 +227,7 @@ export function openChatWindow() {
     return;
   }
 
+  window.umami?.track('chat-open');
   elements.panel.hidden = false;
   if (MOBILE_QUERY.matches) {
     openMobileChat();
@@ -339,11 +340,40 @@ function handleMobileChange(event) {
  * @param {KeyboardEvent} event
  */
 function handleChatKeydown(event) {
-  if (
-    event.key === 'Escape' &&
-    elements?.panel.classList.contains('chat-panel--mobile')
-  ) {
+  const isMobileChat = elements?.panel.classList.contains('chat-panel--mobile');
+  if (!isMobileChat) {
+    return;
+  }
+
+  if (event.key === 'Escape') {
     closeChatWindow();
+    return;
+  }
+
+  if (event.key !== 'Tab') {
+    return;
+  }
+
+  const focusable = [
+    ...elements.panel.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ),
+  ].filter((element) => !element.disabled && element.offsetParent !== null);
+
+  if (focusable.length === 0) {
+    event.preventDefault();
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
   }
 }
 
@@ -994,6 +1024,7 @@ function handleSuggestionClick(event) {
   if (!button) {
     return;
   }
+  window.umami?.track('chat-suggestion');
   const question = button.dataset.question ?? button.textContent.trim();
   elements.input.value = question;
   elements.input.focus({ preventScroll: true });
