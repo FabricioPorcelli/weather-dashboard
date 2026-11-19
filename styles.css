@@ -184,7 +184,7 @@ body {
   background-clip: padding-box;
 }
 
-/* La tira horaria se desplaza sin mostrar una barra horizontal. */
+/* La tira horaria usa una barra propia, separada de las horas. */
 .hourly-scroll {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -192,6 +192,37 @@ body {
 
 .hourly-scroll::-webkit-scrollbar {
   display: none;
+}
+
+.hourly-scrollbar {
+  position: relative;
+  height: 6px;
+  margin-top: 10px;
+  overflow: hidden;
+  background: var(--color-surface-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.hourly-scrollbar[hidden] {
+  display: none;
+}
+
+.hourly-scrollbar__thumb {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 20%;
+  background: var(--color-muted);
+  border-radius: 999px;
+  opacity: 0.55;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.hourly-scrollbar:hover .hourly-scrollbar__thumb {
+  background: var(--color-accent);
+  opacity: 1;
 }
 
 #map {
@@ -1700,6 +1731,20 @@ body.chat-open {
 
   .forecast-day__rain {
     font-size: 0.74rem;
+  }
+
+  .hourly-scroll {
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .hourly-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hourly-scrollbar {
+    display: none;
   }
 
   .hourly-group__label {

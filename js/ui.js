@@ -28,6 +28,8 @@ const dailyPanelEl = document.querySelector('#forecast-daily-panel');
 const hourlyPanelEl = document.querySelector('#forecast-hourly-panel');
 const hourlyDaysEl = document.querySelector('#hourly-days');
 const hourlyStatusEl = document.querySelector('#hourly-status');
+const hourlyScrollbarEl = document.querySelector('#hourly-scrollbar');
+const hourlyScrollbarThumbEl = document.querySelector('#hourly-scrollbar-thumb');
 const daysEl = document.querySelector('#forecast-days');
 const themeButton = document.querySelector('#theme-toggle');
 const badgesEl = document.querySelector('#cache-badges');
@@ -36,6 +38,104 @@ const cacheForecastEl = document.querySelector('#cache-forecast');
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 
 let lastUpdatedIso = null;
+
+/** Ajusta el thumb del scroll horario según el contenido visible. */
+function updateHourlyScrollbar() {
+  // Se muestra antes de medir: un elemento oculto tiene ancho cero.
+  hourlyScrollbarEl.hidden = false;
+  const viewport = hourlyDaysEl.clientWidth;
+  const content = hourlyDaysEl.scrollWidth;
+  const track = hourlyScrollbarEl.clientWidth;
+
+  if (viewport <= 0 || track <= 0 || content <= viewport + 1) {
+    hourlyScrollbarEl.hidden = true;
+    return;
+  }
+
+  const thumbWidth = Math.max((viewport / content) * track, 24);
+  const maxThumb = track - thumbWidth;
+  const maxScroll = content - viewport;
+  const offset =
+    maxScroll > 0 ? (hourlyDaysEl.scrollLeft / maxScroll) * maxThumb : 0;
+
+  hourlyScrollbarThumbEl.style.width = `${thumbWidth}px`;
+  hourlyScrollbarThumbEl.style.transform = `translateX(${offset}px)`;
+}
+
+let hourlyScrollbarPointerId = null;
+let hourlyScrollbarStartX = 0;
+let hourlyScrollbarStartLeft = 0;
+
+/**
+ * @param {PointerEvent} event
+ */
+function endHourlyScrollbarDrag(event) {
+  if (event.pointerId !== hourlyScrollbarPointerId) {
+    return;
+  }
+  if (hourlyScrollbarEl.hasPointerCapture?.(event.pointerId)) {
+    hourlyScrollbarEl.releasePointerCapture(event.pointerId);
+  }
+  hourlyScrollbarPointerId = null;
+}
+
+hourlyDaysEl.addEventListener('scroll', updateHourlyScrollbar, {
+  passive: true,
+});
+
+hourlyScrollbarEl.addEventListener('pointerdown', (event) => {
+  if (hourlyScrollbarEl.hidden || event.button !== 0) {
+    return;
+  }
+
+  const track = hourlyScrollbarEl.clientWidth;
+  const thumbWidth = hourlyScrollbarThumbEl.getBoundingClientRect().width;
+  const maxThumb = track - thumbWidth;
+  const maxScroll = hourlyDaysEl.scrollWidth - hourlyDaysEl.clientWidth;
+  if (maxThumb <= 0 || maxScroll <= 0) {
+    return;
+  }
+
+  const rect = hourlyScrollbarEl.getBoundingClientRect();
+  const targetLeft = Math.min(
+    Math.max(event.clientX - rect.left - thumbWidth / 2, 0),
+    maxThumb,
+  );
+  hourlyDaysEl.scrollLeft = (targetLeft / maxThumb) * maxScroll;
+
+  hourlyScrollbarPointerId = event.pointerId;
+  hourlyScrollbarStartX = event.clientX;
+  hourlyScrollbarStartLeft = hourlyDaysEl.scrollLeft;
+  hourlyScrollbarEl.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+});
+
+hourlyScrollbarEl.addEventListener('pointermove', (event) => {
+  if (event.pointerId !== hourlyScrollbarPointerId) {
+    return;
+  }
+
+  const track = hourlyScrollbarEl.clientWidth;
+  const thumbWidth = hourlyScrollbarThumbEl.getBoundingClientRect().width;
+  const maxThumb = track - thumbWidth;
+  const maxScroll = hourlyDaysEl.scrollWidth - hourlyDaysEl.clientWidth;
+  if (maxThumb <= 0 || maxScroll <= 0) {
+    return;
+  }
+
+  const delta = event.clientX - hourlyScrollbarStartX;
+  hourlyDaysEl.scrollLeft =
+    hourlyScrollbarStartLeft + (delta / maxThumb) * maxScroll;
+});
+
+hourlyScrollbarEl.addEventListener('pointerup', endHourlyScrollbarDrag);
+hourlyScrollbarEl.addEventListener('pointercancel', endHourlyScrollbarDrag);
+
+if ('ResizeObserver' in window) {
+  new ResizeObserver(updateHourlyScrollbar).observe(hourlyDaysEl);
+} else {
+  window.addEventListener('resize', updateHourlyScrollbar);
+}
 
 /**
  * Muestra las coordenadas de la ubicación elegida.
@@ -360,6 +460,10 @@ function activateForecastTab(tabName, notify) {
   if (tabName === 'hourly' && notify) {
     hourlyRequestCallback?.();
   }
+
+  if (tabName === 'hourly') {
+    window.requestAnimationFrame(updateHourlyScrollbar);
+  }
 }
 
 /**
@@ -367,6 +471,7 @@ function activateForecastTab(tabName, notify) {
  */
 export function showHourlyLoading() {
   hourlyDaysEl.replaceChildren();
+  hourlyScrollbarEl.hidden = true;
   hourlyStatusEl.classList.remove('hourly-status--error');
   hourlyStatusEl.textContent = 'Cargando próximas 24 horas…';
   hourlyStatusEl.hidden = false;
@@ -379,6 +484,7 @@ export function showHourlyLoading() {
  */
 export function showHourlyError(error) {
   hourlyDaysEl.replaceChildren();
+  hourlyScrollbarEl.hidden = true;
   hourlyStatusEl.classList.add('hourly-status--error');
   hourlyStatusEl.textContent =
     typeof error === 'string' ? error : messageForError(error);
@@ -469,6 +575,7 @@ export function renderHourly(data) {
   });
 
   hourlyDaysEl.replaceChildren(...sections);
+  window.requestAnimationFrame(updateHourlyScrollbar);
 }
 
 /**

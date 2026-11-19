@@ -66,6 +66,14 @@ test('muestra el pronóstico horario en la vista móvil', async ({ page }) => {
   await expect(page.locator('#forecast-hourly-panel')).toBeVisible();
   await expect(page.locator('.hourly-hour')).toHaveCount(24);
   await expect(page.locator('.hourly-group__label').first()).toHaveText('Hoy');
+
+  const hourlyScroll = await page.locator('.hourly-scroll').evaluate((element) => ({
+    scrollbarWidth: getComputedStyle(element).scrollbarWidth,
+    paddingBottom: getComputedStyle(element).paddingBottom,
+  }));
+  expect(hourlyScroll.scrollbarWidth).toBe('none');
+  expect(hourlyScroll.paddingBottom).toBe('4px');
+  await expect(page.locator('#hourly-scrollbar')).toBeHidden();
 });
 
 test('mantiene el foco dentro del chat móvil', async ({ page }) => {

@@ -125,10 +125,22 @@ test('carga el pronóstico horario junto con la ciudad y lo cachea', async ({
     .evaluate((element) => getComputedStyle(element).animationName);
   expect(hourlyPanelAnimation).toBe('forecast-panel-in');
 
-  const hourlyScrollbar = await page
-    .locator('.hourly-scroll')
-    .evaluate((element) => getComputedStyle(element).scrollbarWidth);
-  expect(hourlyScrollbar).toBe('none');
+  const hourlyScroll = await page.locator('.hourly-scroll').evaluate((element) => ({
+    paddingBottom: getComputedStyle(element).paddingBottom,
+  }));
+  expect(hourlyScroll.paddingBottom).toBe('4px');
+
+  await expect(page.locator('#hourly-scrollbar')).toBeVisible();
+  const hourlyScrollbar = await page.locator('#hourly-scrollbar').evaluate((element) => ({
+    marginTop: getComputedStyle(element).marginTop,
+    height: element.getBoundingClientRect().height,
+    thumbWidth: element
+      .querySelector('.hourly-scrollbar__thumb')
+      .getBoundingClientRect().width,
+  }));
+  expect(hourlyScrollbar.marginTop).toBe('10px');
+  expect(hourlyScrollbar.height).toBeGreaterThan(0);
+  expect(hourlyScrollbar.thumbWidth).toBeGreaterThan(0);
 
   const hourlyPanelHeight = await page
     .locator('#forecast-hourly-panel')
