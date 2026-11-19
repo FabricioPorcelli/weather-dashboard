@@ -852,9 +852,9 @@ body {
 }
 
 .hourly-group__label {
-  margin: 0 0 6px;
+  margin: 0 0 7px;
   color: var(--color-muted);
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -862,15 +862,16 @@ body {
 
 .hourly-group__hours {
   display: flex;
-  gap: 4px;
+  gap: 5px;
 }
 
 .hourly-hour {
-  min-width: 54px;
-  padding: 8px 4px 7px;
+  min-width: 72px;
+  min-height: 182px;
+  padding: 10px 5px 9px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 12px;
   scroll-snap-align: start;
 }
 
@@ -883,12 +884,14 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: space-between;
   gap: 4px;
+  min-height: 156px;
 }
 
 .hourly-hour__time {
   color: var(--color-text);
-  font-size: 0.68rem;
+  font-size: 0.82rem;
   font-weight: 600;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -896,9 +899,22 @@ body {
 
 .hourly-hour__temp {
   color: var(--color-text);
-  font-size: 0.82rem;
+  font-size: 1.08rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.hourly-hour__conditions {
+  display: -webkit-box;
+  min-height: 2.3em;
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.66rem;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .hourly-hour__rain {
@@ -906,7 +922,7 @@ body {
   align-items: center;
   gap: 3px;
   color: var(--color-accent);
-  font-size: 0.58rem;
+  font-size: 0.68rem;
   font-weight: 600;
   line-height: 1;
   white-space: nowrap;
@@ -1497,6 +1513,36 @@ body.chat-open {
   .forecast-day__rain {
     padding: 2px 4px;
     font-size: 0.58rem;
+  }
+
+  .hourly-group__label {
+    font-size: 0.7rem;
+  }
+
+  .hourly-hour {
+    min-width: 68px;
+    min-height: 160px;
+    padding: 9px 4px 8px;
+  }
+
+  .hourly-hour__content {
+    min-height: 136px;
+  }
+
+  .hourly-hour__time {
+    font-size: 0.78rem;
+  }
+
+  .hourly-hour__temp {
+    font-size: 1rem;
+  }
+
+  .hourly-hour__conditions {
+    font-size: 0.62rem;
+  }
+
+  .hourly-hour__rain {
+    font-size: 0.64rem;
   }
 
   .chat-open {

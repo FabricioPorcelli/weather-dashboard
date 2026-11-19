@@ -446,13 +446,18 @@ export function renderHourly(data) {
       tempEl.className = 'hourly-hour__temp';
       tempEl.textContent = `${Math.round(hour.temperature_c)}°`;
 
+      const conditionsEl = document.createElement('span');
+      conditionsEl.className = 'hourly-hour__conditions';
+      conditionsEl.textContent = hour.conditions;
+      conditionsEl.title = hour.conditions;
+
       const rainEl = document.createElement('span');
       rainEl.className = 'hourly-hour__rain';
       const rainDot = document.createElement('span');
       rainDot.className = 'forecast-day__rain-dot';
       rainEl.append(rainDot, document.createTextNode(`${rain}%`));
 
-      content.append(timeEl, icon, tempEl, rainEl);
+      content.append(timeEl, icon, tempEl, conditionsEl, rainEl);
       card.append(content);
       row.append(card);
     });
