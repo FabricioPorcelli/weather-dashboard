@@ -1653,8 +1653,16 @@ textarea {
 }
 
 body.chat-open {
+  position: fixed;
+  inset: 0;
+  width: 100%;
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+/* Con el chat móvil abierto, el mapa de fondo queda visible pero inerte. */
+body.chat-open #map {
+  pointer-events: none;
 }
 
 @media (max-width: 640px) {
@@ -1923,6 +1931,7 @@ body.chat-open {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     overscroll-behavior: contain;
+    touch-action: pan-y;
     z-index: 3000;
   }
 
@@ -1963,6 +1972,7 @@ body.chat-open {
     margin-bottom: 8px;
     padding-right: 0;
     overscroll-behavior: contain;
+    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
 

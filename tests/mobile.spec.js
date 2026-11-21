@@ -85,6 +85,7 @@ test('anima la apertura y el cierre del chat móvil', async ({ page }) => {
   await expect(panel).toHaveClass(/chat-panel--mobile/);
   await expect(panel).toHaveCSS('animation-name', 'chat-panel-in');
   await expect(panel).toHaveCSS('user-select', 'none');
+  await expect(page.locator('#map')).toHaveCSS('pointer-events', 'none');
 
   await panel.evaluate((element) =>
     Promise.all(element.getAnimations().map((animation) => animation.finished)),
@@ -104,6 +105,7 @@ test('anima la apertura y el cierre del chat móvil', async ({ page }) => {
 
   await page.locator('#chat-close').click();
   await expect(panel).toBeHidden();
+  await expect(page.locator('#map')).toHaveCSS('pointer-events', 'auto');
 });
 
 test('el botón atrás cierra el chat sin salir de la app', async ({ page }) => {
