@@ -325,6 +325,37 @@ test('abre el chat, muestra sugerencias y lo cierra tocando el marcador', async 
   await expect(page.locator('.leaflet-popup')).toHaveCount(1);
 });
 
+test('descarta conversaciones viejas al reabrir el chat', async ({ page }) => {
+  await page.addInitScript(() => {
+    const updatedAt = new Date(
+      Date.now() - 3 * 60 * 60 * 1000,
+    ).toISOString();
+    localStorage.setItem(
+      'weather-dashboard:chat-anchors',
+      JSON.stringify([
+        {
+          session_id: 'ses_vieja',
+          lat: -32.94682,
+          lon: -60.63932,
+          label: 'Rosario',
+          messages: [
+            { role: 'user', text: 'Pregunta vieja' },
+            { role: 'assistant', text: 'Respuesta vieja' },
+          ],
+          updated_at: updatedAt,
+        },
+      ]),
+    );
+  });
+
+  await page.goto('/');
+  await searchRosario(page);
+  await page.locator('#chat-open').click();
+
+  await expect(page.locator('.chat__suggestions')).toBeVisible();
+  await expect(page.locator('.chat__message')).toHaveCount(0);
+});
+
 test('muestra Reintentar y recupera la consulta después de un error', async ({
   page,
 }) => {

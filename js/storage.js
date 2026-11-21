@@ -4,7 +4,7 @@
  * (por ejemplo, en modo privado con almacenamiento bloqueado).
  */
 
-import { STORAGE_KEYS } from './config.js';
+import { CHAT_HISTORY_TTL_MS, STORAGE_KEYS } from './config.js';
 
 /** Temas válidos que entiende la interfaz. */
 const THEMES = ['dark', 'light'];
@@ -111,12 +111,47 @@ export function loadChatAnchors() {
     return [];
   }
 
-  return value.filter(
-    (anchor) =>
-      typeof anchor?.session_id === 'string' &&
-      typeof anchor?.lat === 'number' &&
-      typeof anchor?.lon === 'number',
+  const now = Date.now();
+  const anchors = value.filter((anchor) => {
+    if (
+      typeof anchor?.session_id !== 'string' ||
+      typeof anchor?.lat !== 'number' ||
+      typeof anchor?.lon !== 'number'
+    ) {
+      return false;
+    }
+
+    const updatedAt = Date.parse(anchor.updated_at ?? '');
+    return (
+      Number.isFinite(updatedAt) &&
+      now - updatedAt <= CHAT_HISTORY_TTL_MS
+    );
+  });
+
+  // Limpia entradas vencidas para no seguir arrastrándolas.
+  if (anchors.length !== value.length) {
+    write(STORAGE_KEYS.chatAnchors, anchors);
+  }
+  return anchors;
+}
+
+/**
+ * Elimina una conversación guardada por id de sesión.
+ *
+ * @param {string | null} sessionId
+ */
+export function removeChatAnchor(sessionId) {
+  if (!sessionId) {
+    return;
+  }
+
+  const anchors = loadChatAnchors();
+  const remaining = anchors.filter(
+    (anchor) => anchor.session_id !== sessionId,
   );
+  if (remaining.length !== anchors.length) {
+    write(STORAGE_KEYS.chatAnchors, remaining);
+  }
 }
 
 /**

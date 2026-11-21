@@ -76,6 +76,27 @@ test('muestra el pronóstico horario en la vista móvil', async ({ page }) => {
   await expect(page.locator('#hourly-scrollbar')).toBeHidden();
 });
 
+test('anima la apertura y el cierre del chat móvil', async ({ page }) => {
+  await page.goto('/');
+  await searchRosario(page);
+
+  await page.locator('#chat-open').click();
+  const panel = page.locator('#chat-panel');
+  await expect(panel).toHaveClass(/chat-panel--mobile/);
+  await expect(panel).toHaveCSS('animation-name', 'chat-panel-in');
+
+  const closeAnimation = await panel.evaluate((element) => {
+    element.classList.add('chat-panel--closing');
+    const name = getComputedStyle(element).animationName;
+    element.classList.remove('chat-panel--closing');
+    return name;
+  });
+  expect(closeAnimation).toBe('chat-panel-out');
+
+  await page.locator('#chat-close').click();
+  await expect(panel).toBeHidden();
+});
+
 test('mantiene el foco dentro del chat móvil', async ({ page }) => {
   await page.goto('/');
   await searchRosario(page);

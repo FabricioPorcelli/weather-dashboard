@@ -8,11 +8,13 @@
 
 import {
   ASSISTANT_BASE_URL,
+  CHAT_HISTORY_TTL_MS,
   CHAT_LOCATION_RADIUS_KM,
 } from './config.js';
 import {
   loadChatAnchors,
   loadUserId,
+  removeChatAnchor,
   saveChatAnchor,
 } from './storage.js';
 import { isCoordinateLabel } from './text.js';
@@ -47,6 +49,14 @@ const MAX_CHAT_MESSAGES = 40;
 /** Radio para reconocer que un clic volvió a una conversación guardada. */
 const ANCHOR_MATCH_KM = 0.5;
 
+/** Duración de la animación de cierre del chat. */
+const CHAT_CLOSE_ANIMATION_MS = 200;
+
+/** Respeta la preferencia de menos movimiento. */
+const REDUCED_MOTION_QUERY = window.matchMedia(
+  '(prefers-reduced-motion: reduce)',
+);
+
 /** @type {object | null} Última ubicación elegida en el mapa o buscador. */
 let currentLocation = null;
 
@@ -55,6 +65,12 @@ let conversationLocation = null;
 
 /** @type {string | null} Sesión devuelta por el backend. */
 let sessionId = null;
+
+/** @type {number} Última actividad de la conversación, en milisegundos. */
+let conversationUpdatedAt = 0;
+
+/** @type {number | null} Temporizador de la animación de cierre. */
+let closeTimer = null;
 
 /** @type {string | null} Identificador anónimo del navegador. */
 let userId = null;
@@ -201,9 +217,15 @@ export function setChatLocation(location) {
  * @param {{ session_id: string, lat: number, lon: number, label?: string | null }} anchor
  */
 export function resumeConversation(anchor) {
+  const savedAt = Date.parse(anchor.updated_at ?? '');
+  if (Number.isFinite(savedAt) && Date.now() - savedAt > CHAT_HISTORY_TTL_MS) {
+    return;
+  }
+
   rememberAnchor();
   cancelActiveStream();
   sessionId = anchor.session_id;
+  conversationUpdatedAt = Number.isFinite(savedAt) ? savedAt : Date.now();
   currentLocation = {
     lat: anchor.lat,
     lon: anchor.lon,
@@ -222,11 +244,74 @@ export function resumeConversation(anchor) {
 }
 
 /**
+ * Indica si la conversación actual superó el tiempo máximo sin actividad.
+ *
+ * @returns {boolean}
+ */
+function conversationExpired() {
+  return (
+    Boolean(sessionId) &&
+    conversationUpdatedAt > 0 &&
+    Date.now() - conversationUpdatedAt > CHAT_HISTORY_TTL_MS
+  );
+}
+
+/**
+ * Cancela una animación de cierre pendiente.
+ */
+function cancelPendingClose() {
+  if (closeTimer !== null) {
+    window.clearTimeout(closeTimer);
+    closeTimer = null;
+  }
+  elements?.panel.classList.remove('chat-panel--closing');
+  elements?.panel
+    .closest('.leaflet-popup')
+    ?.classList.remove('chat-popup--closing');
+}
+
+/**
+ * Termina el cierre después de la animación.
+ */
+function finishClose() {
+  if (!elements) {
+    return;
+  }
+
+  closeTimer = null;
+  elements.panel.classList.remove('chat-panel--closing', 'chat-panel--mobile');
+  elements.panel.hidden = true;
+  elements.panel.removeAttribute('role');
+  elements.panel.removeAttribute('aria-modal');
+  elements.panel.style.removeProperty('--chat-vv-height');
+  elements.panel.style.removeProperty('--chat-vv-top');
+  document.body.classList.remove('chat-open');
+  closePopup?.();
+  elements.open?.focus({ preventScroll: true });
+}
+
+/**
+ * Descarta la conversación actual y su ancla guardada.
+ */
+function forgetConversation() {
+  if (sessionId) {
+    removeChatAnchor(sessionId);
+    onAnchorsChanged?.();
+  }
+  resetConversation();
+}
+
+/**
  * Abre el panel del chat como popup anclado al marcador.
  */
 export function openChatWindow() {
   if (!elements || !currentLocation) {
     return;
+  }
+
+  cancelPendingClose();
+  if (conversationExpired()) {
+    forgetConversation();
   }
 
   window.umami?.track('chat-open');
@@ -268,28 +353,34 @@ function handlePopupClosed() {
     return;
   }
 
+  cancelPendingClose();
   elements.panel.hidden = true;
   // Fuerza la limpieza del contenedor cuando el cierre viene del marcador.
   closePopup?.();
 }
 
 /**
- * Cierra el chat móvil y limpia el estado del overlay.
+ * Cierra el chat con una animación leve y limpia el estado del overlay.
  */
 export function closeChatWindow() {
-  if (!elements) {
+  if (!elements || elements.panel.hidden) {
+    return;
+  }
+  if (closeTimer !== null) {
     return;
   }
 
-  elements.panel.classList.remove('chat-panel--mobile');
-  elements.panel.hidden = true;
-  elements.panel.removeAttribute('role');
-  elements.panel.removeAttribute('aria-modal');
-  elements.panel.style.removeProperty('--chat-vv-height');
-  elements.panel.style.removeProperty('--chat-vv-top');
-  document.body.classList.remove('chat-open');
-  closePopup?.();
-  elements.open?.focus({ preventScroll: true });
+  if (REDUCED_MOTION_QUERY.matches) {
+    finishClose();
+    return;
+  }
+
+  const popup = elements.panel.closest('.leaflet-popup');
+  const target = popup && !MOBILE_QUERY.matches ? popup : elements.panel;
+  target.classList.add(
+    target === elements.panel ? 'chat-panel--closing' : 'chat-popup--closing',
+  );
+  closeTimer = window.setTimeout(finishClose, CHAT_CLOSE_ANIMATION_MS);
 }
 
 /**
@@ -402,6 +493,7 @@ async function sendMessage(text) {
   if (!conversationLocation) {
     conversationLocation = { ...currentLocation };
   }
+  conversationUpdatedAt = Date.now();
 
   const myRequest = ++requestId;
   isStreaming = true;
@@ -648,6 +740,7 @@ function rememberAnchor() {
     messages: conversationMessages.slice(-MAX_CHAT_MESSAGES),
     updated_at: new Date().toISOString(),
   });
+  conversationUpdatedAt = Date.now();
   onAnchorsChanged?.();
 }
 
@@ -1076,6 +1169,7 @@ function resetConversation() {
   sessionId = null;
   conversationLocation = null;
   conversationMessages = [];
+  conversationUpdatedAt = 0;
   if (elements) {
     elements.messages.replaceChildren();
     hideStatus();

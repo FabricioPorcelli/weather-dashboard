@@ -1216,6 +1216,51 @@ textarea {
   max-width: 440px;
 }
 
+@keyframes chat-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes chat-panel-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+}
+
+@keyframes chat-popup-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.chat-panel:not([hidden]) {
+  animation: chat-panel-in 0.2s ease both;
+}
+
+.chat-panel--closing {
+  animation: chat-panel-out 0.2s ease both !important;
+  pointer-events: none;
+}
+
+.leaflet-popup.chat-popup--closing {
+  animation: chat-popup-out 0.2s ease both !important;
+  pointer-events: none;
+}
+
 .chat-popup .leaflet-popup-content-wrapper {
   color: var(--color-text);
   background: var(--color-panel);
@@ -1234,7 +1279,7 @@ textarea {
 .chat-popup .leaflet-popup-close-button {
   top: 6px;
   right: 6px;
-  display: grid;
+  display: none;
   place-items: center;
   width: 32px;
   height: 32px;
@@ -1255,7 +1300,7 @@ textarea {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 10px;
-  padding-right: 38px;
+  padding-right: 0;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--color-border);
 }
@@ -1566,7 +1611,31 @@ textarea {
 /* --- Layout móvil ---------------------------------------------------------- */
 
 .chat__close {
-  display: none;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 1.6rem;
+  line-height: 1;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.chat__close:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.chat__close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 body.chat-open {

@@ -53,6 +53,12 @@ export const CITY_ZOOM = 13;
  */
 export const CHAT_LOCATION_RADIUS_KM = 5;
 
+/**
+ * Tiempo máximo que se conserva una conversación cerrada.
+ * Pasado ese lapso desde la última actividad, el chat arranca una sesión nueva.
+ */
+export const CHAT_HISTORY_TTL_MS = 2 * 60 * 60 * 1000;
+
 /** Vista inicial del mapa: Buenos Aires. */
 export const INITIAL_VIEW = {
   lat: -34.6,
