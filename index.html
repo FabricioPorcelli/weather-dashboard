@@ -48,11 +48,13 @@
   ></script>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Saltar al contenido</a>
+
   <!-- Contenedor del mapa: ocupa toda la pantalla -->
-  <div id="map" role="application" aria-label="Mapa para elegir una ubicación"></div>
+  <div id="map" role="region" aria-label="Mapa para elegir una ubicación"></div>
 
   <!-- Panel lateral: resumen de la ubicación elegida -->
-  <aside class="panel">
+  <main class="panel" id="main-content" tabindex="-1">
     <button
       class="panel__handle"
       id="panel-handle"
@@ -310,7 +312,7 @@
       </div>
     </div>
 
-  </aside>
+  </main>
 
   <p class="sr-only" id="live-status" aria-live="polite"></p>
 

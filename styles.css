@@ -92,12 +92,45 @@
   transition: opacity 0.4s ease;
 }
 
+/* Movimiento reducido: se apagan las animaciones que desplazan o pulsan,
+   pero se conservan los cambios de estado por color y opacidad. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition: none !important;
+  .location-marker__pulse,
+  .chat-anchor__dot,
+  [class^='weather-icon__'],
+  [class*=' weather-icon__'],
+  .icon,
+  .panel,
+  .card--current,
+  .forecast-panel,
+  .forecast-day,
+  .chat-panel,
+  .chat-panel--closing,
+  .leaflet-popup.chat-popup--closing {
     animation: none !important;
+  }
+
+  .panel,
+  .card--current,
+  .forecast-day,
+  .panel__collapsible,
+  .card__extra,
+  .forecast-tab,
+  .search__button,
+  .chat-open,
+  .panel__theme,
+  .chat__suggestion,
+  .chat__send,
+  .skip-link {
+    transition: none !important;
+  }
+
+  .search__button:active,
+  .chat-open:active,
+  .panel__theme:active,
+  .chat__suggestion:active,
+  .chat__send:active {
+    transform: none;
   }
 }
 
@@ -108,6 +141,30 @@ body {
   font-family: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
+}
+
+/* Enlace de salto: invisible hasta que recibe foco por teclado. */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 4000;
+  padding: 10px 14px;
+  color: var(--color-on-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--color-accent);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  transform: translateY(-160%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+  transform: translateY(0);
 }
 
 /* Leaflet define su propia tipografía; la alineamos con la del dashboard. */
@@ -121,7 +178,7 @@ body {
 .leaflet-container .leaflet-control-attribution {
   padding: 3px 8px;
   color: var(--color-muted);
-  font-size: 0.68rem;
+  font-size: 0.8125rem;
   line-height: 1.4;
   background: var(--color-panel);
   border: 1px solid var(--color-border);
@@ -385,7 +442,7 @@ body {
 .panel__tagline {
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   line-height: 1.35;
 }
 
@@ -479,12 +536,12 @@ body {
   align-items: center;
   gap: 5px;
   width: auto;
-  min-height: 0;
+  min-height: 32px;
   margin: -4px 0 10px auto;
-  padding: 3px 4px;
+  padding: 5px 6px;
   color: var(--color-muted);
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   background: transparent;
   border: 0;
@@ -612,7 +669,7 @@ textarea {
   padding: 2px 8px;
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -708,7 +765,7 @@ textarea {
 
 .card__details {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(8.75rem, 1fr));
   gap: 12px 16px;
   margin: 16px 0 0;
   padding-top: 14px;
@@ -716,10 +773,11 @@ textarea {
 }
 
 .card__details dt {
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   text-transform: uppercase;
   letter-spacing: 0.045em;
   color: var(--color-muted);
+  overflow-wrap: anywhere;
 }
 
 .card__details dd {
@@ -730,7 +788,7 @@ textarea {
 
 .card__updated {
   margin: 12px 0 0;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   color: var(--color-muted);
 }
 
@@ -786,9 +844,10 @@ textarea {
 
 .forecast-tab {
   padding: 4px 8px;
+  min-height: 32px;
   color: var(--color-muted);
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
   background: transparent;
@@ -922,7 +981,7 @@ textarea {
 
 .forecast-day__date {
   color: var(--color-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   white-space: nowrap;
 }
 
@@ -942,7 +1001,7 @@ textarea {
 .hourly-status {
   margin: 0 0 8px;
   color: var(--color-muted);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 
 .hourly-status--error {
@@ -965,7 +1024,7 @@ textarea {
 .hourly-group__label {
   margin: 0 0 8px;
   color: var(--color-muted);
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1368,7 +1427,7 @@ textarea {
 .chat__suggestions-title {
   margin: 0 0 6px;
   color: var(--color-muted);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
 }
 
 .chat__suggestions-list {
@@ -1378,10 +1437,13 @@ textarea {
 }
 
 .chat__suggestion {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
   padding: 6px 10px;
   color: var(--color-text);
   font: inherit;
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   line-height: 1.2;
   text-align: left;
   background: var(--color-surface);
@@ -1489,7 +1551,7 @@ textarea {
   margin: 0;
   padding: 0 2px;
   color: var(--color-muted);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
 }
 
 .chat__feedback {
@@ -1502,14 +1564,15 @@ textarea {
 .chat__feedback-label {
   width: 100%;
   color: var(--color-muted);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
 }
 
 .chat__feedback-button {
+  min-height: 32px;
   padding: 4px 8px;
   color: var(--color-text);
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 999px;
@@ -1528,12 +1591,12 @@ textarea {
 .chat__feedback-done {
   margin: 0;
   color: var(--color-hit);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
 }
 
 .chat__feedback-error {
   color: var(--color-danger);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
 }
 
 /* Puntos de conversaciones guardadas en el mapa. */
@@ -1707,8 +1770,8 @@ body.chat-sheet-open #map {
     right: 8px;
     bottom: calc(10px + env(safe-area-inset-bottom));
     width: auto;
-    height: min(68vh, 620px);
-    height: min(68dvh, 620px);
+    height: min(74vh, 660px);
+    height: min(74dvh, 660px);
     margin: 0;
     padding: 10px 16px 22px;
     background: var(--color-panel);
@@ -1797,8 +1860,8 @@ body.chat-sheet-open #map {
   }
 
   .panel__theme {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
   }
 
   .panel__hint {
@@ -1824,8 +1887,31 @@ body.chat-sheet-open #map {
     min-height: 44px;
   }
 
+  .forecast-tab {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
   .locate-button {
-    min-height: 30px;
+    min-height: 44px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+  }
+
+  /* Controles del mapa cómodos para el pulgar. */
+  .leaflet-touch .leaflet-control-zoom a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 24px;
+  }
+
+  /* La atribución puede ocupar dos líneas en pantallas angostas o con
+     texto ampliado, sin chocar con el control de zoom. */
+  .leaflet-container .leaflet-control-attribution {
+    max-width: calc(100vw - 88px);
+    white-space: normal;
+    text-align: right;
   }
 
   .card {
@@ -1875,7 +1961,7 @@ body.chat-sheet-open #map {
   }
 
   .forecast-day__date {
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
   }
 
   .forecast-day__icon {
@@ -1893,7 +1979,7 @@ body.chat-sheet-open #map {
   }
 
   .forecast-day__rain {
-    font-size: 0.74rem;
+    font-size: 0.8125rem;
   }
 
   .hourly-scroll {
@@ -1911,7 +1997,7 @@ body.chat-sheet-open #map {
   }
 
   .hourly-group__label {
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
   }
 
   .hourly-hour {
@@ -1995,8 +2081,14 @@ body.chat-sheet-open #map {
   }
 
   .chat-panel--mobile .chat__suggestion {
-    padding: 7px 10px;
-    font-size: 0.8rem;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 0.875rem;
+  }
+
+  .chat-panel--mobile .chat__feedback-button {
+    min-height: 44px;
+    padding: 10px 12px;
   }
 
   .chat-panel--mobile .chat__messages {

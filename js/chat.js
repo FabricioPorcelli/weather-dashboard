@@ -409,11 +409,15 @@ export function openChatWindow() {
 
   window.umami?.track('chat-open');
   elements.panel.hidden = false;
+  elements.panel.setAttribute('role', 'dialog');
   if (MOBILE_QUERY.matches) {
     openMobileChat();
-  } else if (!openPopup || !openPopup(elements.panel, handlePopupClosed)) {
-    elements.panel.hidden = true;
-    return;
+  } else {
+    elements.panel.removeAttribute('aria-modal');
+    if (!openPopup || !openPopup(elements.panel, handlePopupClosed)) {
+      elements.panel.hidden = true;
+      return;
+    }
   }
 
   elements.input.focus({ preventScroll: true });
@@ -550,13 +554,17 @@ function handleMobileChange(event) {
  * @param {KeyboardEvent} event
  */
 function handleChatKeydown(event) {
-  const isMobileChat = elements?.panel.classList.contains('chat-panel--mobile');
-  if (!isMobileChat) {
+  if (!elements || elements.panel.hidden) {
     return;
   }
 
-  if (event.key === 'Escape') {
+  if (event.key === 'Escape' && !event.isComposing) {
     closeChatWindow();
+    return;
+  }
+
+  const isMobileChat = elements.panel.classList.contains('chat-panel--mobile');
+  if (!isMobileChat) {
     return;
   }
 

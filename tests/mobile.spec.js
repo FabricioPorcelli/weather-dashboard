@@ -76,6 +76,34 @@ test('muestra el pronóstico horario en la vista móvil', async ({ page }) => {
   await expect(page.locator('#hourly-scrollbar')).toBeHidden();
 });
 
+test('mantiene targets táctiles cómodos en móvil', async ({ page }) => {
+  await page.goto('/');
+  await searchRosario(page);
+
+  const tabBox = await page.getByRole('tab', { name: 'Por hora' }).boundingBox();
+  expect(tabBox.height).toBeGreaterThanOrEqual(44);
+
+  const locateBox = await page.locator('#locate-button').boundingBox();
+  expect(locateBox.height).toBeGreaterThanOrEqual(44);
+
+  const themeBox = await page.locator('#theme-toggle').boundingBox();
+  expect(themeBox.width).toBeGreaterThanOrEqual(44);
+  expect(themeBox.height).toBeGreaterThanOrEqual(44);
+
+  const zoomBox = await page.locator('.leaflet-control-zoom-in').boundingBox();
+  expect(zoomBox.width).toBeGreaterThanOrEqual(44);
+  expect(zoomBox.height).toBeGreaterThanOrEqual(44);
+
+  await page.locator('#chat-open').click();
+  const suggestion = page.locator('.chat__suggestion').first();
+  await expect(suggestion).toBeVisible();
+  await page.locator('#chat-panel').evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
+  const suggestionBox = await suggestion.boundingBox();
+  expect(suggestionBox.height).toBeGreaterThanOrEqual(44);
+});
+
 test('anima la apertura y el cierre del chat móvil', async ({ page }) => {
   await page.goto('/');
   await searchRosario(page);

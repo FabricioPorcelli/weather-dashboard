@@ -325,6 +325,55 @@ test('abre el chat, muestra sugerencias y lo cierra tocando el marcador', async 
   await expect(page.locator('.leaflet-popup')).toHaveCount(1);
 });
 
+test('expone el chat como diálogo y lo cierra con Escape', async ({ page }) => {
+  await page.goto('/');
+  await searchRosario(page);
+
+  await page.locator('#chat-open').click();
+  const panel = page.locator('#chat-panel');
+  await expect(panel).toHaveAttribute('role', 'dialog');
+  await expect(panel).toHaveAttribute(
+    'aria-label',
+    'Preguntas sobre el clima',
+  );
+  await expect(page.locator('#chat-input')).toBeFocused();
+
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.leaflet-popup')).toHaveCount(0);
+  await expect(page.locator('#chat-open')).toBeFocused();
+});
+
+test('ofrece un landmark principal y un enlace de salto', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.locator('main#main-content')).toBeVisible();
+
+  await page.keyboard.press('Tab');
+  const skipLink = page.locator('.skip-link');
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toBeVisible();
+
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#main-content')).toBeFocused();
+});
+
+test('reduce el movimiento decorativo cuando el sistema lo pide', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await searchRosario(page);
+
+  await expect(page.locator('.panel')).toHaveCSS('animation-name', 'none');
+  await expect(page.locator('.location-marker__pulse')).toHaveCSS(
+    'animation-name',
+    'none',
+  );
+
+  await page.locator('#chat-open').click();
+  await expect(page.locator('#chat-panel')).toHaveCSS('animation-name', 'none');
+});
+
 test('descarta conversaciones viejas al reabrir el chat', async ({ page }) => {
   await page.addInitScript(() => {
     const updatedAt = new Date(
