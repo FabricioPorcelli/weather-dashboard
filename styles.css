@@ -1214,6 +1214,20 @@ textarea {
 .chat-panel {
   width: 100%;
   max-width: 440px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.chat-panel * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chat__input,
+.chat__messages {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 @keyframes chat-panel-in {
@@ -1640,6 +1654,7 @@ textarea {
 
 body.chat-open {
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 @media (max-width: 640px) {
@@ -1886,26 +1901,28 @@ body.chat-open {
     min-height: 44px;
   }
 
-  /* Chat móvil: ocupa el viewport visible y deja el teclado arriba del input. */
+  /* Chat móvil: hoja flotante que deja ver el mapa y se ajusta al teclado. */
   .chat-panel--mobile {
     position: fixed;
-    top: var(--chat-vv-top, 0);
-    left: 0;
-    right: 0;
+    top: var(--chat-vv-top, 10dvh);
+    left: 8px;
+    right: 8px;
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: auto;
     max-width: none;
-    height: var(--chat-vv-height, 100dvh);
-    max-height: var(--chat-vv-height, 100dvh);
+    height: var(--chat-vv-height, 80dvh);
+    max-height: var(--chat-vv-height, 80dvh);
     margin: 0;
-    padding: max(10px, env(safe-area-inset-top)) 14px
-      max(10px, env(safe-area-inset-bottom));
+    padding: 14px 14px max(12px, env(safe-area-inset-bottom));
     background: var(--color-bg);
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    backdrop-filter: none;
+    background: color-mix(in srgb, var(--color-bg) 90%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overscroll-behavior: contain;
     z-index: 3000;
   }
 

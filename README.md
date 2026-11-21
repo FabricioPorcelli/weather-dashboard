@@ -71,7 +71,7 @@ Para habilitar el chat, seguí las instrucciones de [weather-assistant](https://
 
 ## Tests
 
-Los 15 tests E2E cubren búsqueda con fallback, clic en el mapa, tema, geolocalización, reintento, pronóstico horario, foco del buscador, historial viejo del chat, animación del chat, bottom sheet móvil y apertura/cierre del chat. Mockean las APIs, así que no necesitan claves ni servicios levantados. Solo necesitan red para cargar Leaflet desde su CDN.
+Los 16 tests E2E cubren búsqueda con fallback, clic en el mapa, tema, geolocalización, reintento, pronóstico horario, foco del buscador, historial viejo del chat, animación del chat, botón atrás móvil, bottom sheet móvil y apertura/cierre del chat. Mockean las APIs, así que no necesitan claves ni servicios levantados. Solo necesitan red para cargar Leaflet desde su CDN.
 
 ```bash
 npm ci

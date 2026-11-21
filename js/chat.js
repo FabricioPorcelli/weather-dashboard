@@ -72,6 +72,12 @@ let conversationUpdatedAt = 0;
 /** @type {number | null} Temporizador de la animación de cierre. */
 let closeTimer = null;
 
+/** @type {boolean} Indica si el chat móvil agregó una entrada al historial. */
+let chatHistoryPushed = false;
+
+/** @type {number} Altura base del chat móvil sin teclado. */
+let mobileChatBaseHeight = 0;
+
 /** @type {string | null} Identificador anónimo del navegador. */
 let userId = null;
 
@@ -145,6 +151,7 @@ export function initChat({
   elements.close?.addEventListener('click', closeChatWindow);
   elements.suggestions?.addEventListener('click', handleSuggestionClick);
   document.addEventListener('keydown', handleChatKeydown);
+  window.addEventListener('popstate', handlePopState);
   window.addEventListener('resize', handleViewportChange);
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', handleViewportChange);
@@ -285,9 +292,66 @@ function finishClose() {
   elements.panel.removeAttribute('aria-modal');
   elements.panel.style.removeProperty('--chat-vv-height');
   elements.panel.style.removeProperty('--chat-vv-top');
+  mobileChatBaseHeight = 0;
   document.body.classList.remove('chat-open');
   closePopup?.();
+  removeChatHistoryState();
   elements.open?.focus({ preventScroll: true });
+}
+
+/**
+ * Agrega una entrada al historial para que el botón atrás no salga del sitio.
+ */
+function pushChatHistoryState() {
+  if (chatHistoryPushed) {
+    return;
+  }
+
+  try {
+    history.pushState({ weatherChat: true }, '');
+    chatHistoryPushed = true;
+  } catch {
+    // Si el navegador bloquea history, el chat sigue funcionando.
+  }
+}
+
+/**
+ * Consume la entrada de historial propia al cerrar el chat manualmente.
+ */
+function removeChatHistoryState() {
+  if (!chatHistoryPushed) {
+    return;
+  }
+
+  chatHistoryPushed = false;
+  if (history.state?.weatherChat) {
+    history.back();
+  }
+}
+
+/**
+ * Primer atrás: oculta el teclado. Segundo atrás: cierra el chat.
+ */
+function handlePopState() {
+  if (!elements || !MOBILE_QUERY.matches || elements.panel.hidden) {
+    chatHistoryPushed = false;
+    return;
+  }
+
+  const viewport = window.visualViewport;
+  const keyboardOpen = viewport
+    ? viewport.height < window.innerHeight - 100
+    : document.activeElement === elements.input;
+
+  if (keyboardOpen) {
+    elements.input.blur();
+    chatHistoryPushed = false;
+    pushChatHistoryState();
+    return;
+  }
+
+  chatHistoryPushed = false;
+  closeChatWindow();
 }
 
 /**
@@ -340,6 +404,8 @@ function openMobileChat() {
   elements.panel.setAttribute('role', 'dialog');
   elements.panel.setAttribute('aria-modal', 'true');
   document.body.classList.add('chat-open');
+  mobileChatBaseHeight = window.innerHeight;
+  pushChatHistoryState();
   closePopup?.();
   syncMobileViewport();
 }
@@ -391,11 +457,22 @@ function syncMobileViewport() {
     return;
   }
 
+  const layoutHeight = window.innerHeight;
   const viewport = window.visualViewport;
-  const height = viewport?.height ?? window.innerHeight;
+  const height = viewport?.height ?? layoutHeight;
   const top = viewport?.offsetTop ?? 0;
-  elements.panel.style.setProperty('--chat-vv-height', `${Math.round(height)}px`);
-  elements.panel.style.setProperty('--chat-vv-top', `${Math.round(top)}px`);
+  const keyboardOpen = height < layoutHeight - 100;
+  if (!keyboardOpen) {
+    mobileChatBaseHeight = layoutHeight;
+  }
+
+  const baseHeight = mobileChatBaseHeight || layoutHeight;
+  const preferred = Math.min(baseHeight * 0.8, 720);
+  const sheetHeight = Math.max(220, Math.min(preferred, height - 12));
+  const sheetTop = top + Math.max(8, height - sheetHeight - 8);
+
+  elements.panel.style.setProperty('--chat-vv-height', `${Math.round(sheetHeight)}px`);
+  elements.panel.style.setProperty('--chat-vv-top', `${Math.round(sheetTop)}px`);
 }
 
 /**

@@ -84,6 +84,15 @@ test('anima la apertura y el cierre del chat móvil', async ({ page }) => {
   const panel = page.locator('#chat-panel');
   await expect(panel).toHaveClass(/chat-panel--mobile/);
   await expect(panel).toHaveCSS('animation-name', 'chat-panel-in');
+  await expect(panel).toHaveCSS('user-select', 'none');
+
+  await panel.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
+  const box = await panel.boundingBox();
+  expect(box.height).toBeLessThan(844 * 0.9);
+  expect(box.height).toBeGreaterThan(844 * 0.7);
+  expect(box.y).toBeGreaterThan(40);
 
   const closeAnimation = await panel.evaluate((element) => {
     element.classList.add('chat-panel--closing');
@@ -95,6 +104,21 @@ test('anima la apertura y el cierre del chat móvil', async ({ page }) => {
 
   await page.locator('#chat-close').click();
   await expect(panel).toBeHidden();
+});
+
+test('el botón atrás cierra el chat sin salir de la app', async ({ page }) => {
+  await page.goto('/');
+  await searchRosario(page);
+
+  await page.locator('#chat-open').click();
+  const panel = page.locator('#chat-panel');
+  await expect(panel).toBeVisible();
+  const url = page.url();
+
+  await page.evaluate(() => history.back());
+
+  await expect(panel).toBeHidden();
+  expect(page.url()).toBe(url);
 });
 
 test('mantiene el foco dentro del chat móvil', async ({ page }) => {
