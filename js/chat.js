@@ -21,6 +21,7 @@ const TOOL_LABELS = {
   get_current_weather: 'Consultando el clima actual…',
   get_forecast: 'Consultando el pronóstico…',
   get_hourly_forecast: 'Consultando el pronóstico por hora…',
+  get_history: 'Consultando el histórico…',
   get_umbrella_advice: 'Evaluando si necesitás paraguas…',
   get_clothing_advice: 'Evaluando qué ropa llevar…',
   get_watering_advice: 'Evaluando si conviene regar…',
