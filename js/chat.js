@@ -462,14 +462,21 @@ function syncMobileViewport() {
   const height = viewport?.height ?? layoutHeight;
   const top = viewport?.offsetTop ?? 0;
   const keyboardOpen = height < layoutHeight - 100;
-  if (!keyboardOpen) {
+  if (
+    !keyboardOpen &&
+    (!mobileChatBaseHeight ||
+      Math.abs(layoutHeight - mobileChatBaseHeight) > 120)
+  ) {
     mobileChatBaseHeight = layoutHeight;
   }
 
   const baseHeight = mobileChatBaseHeight || layoutHeight;
   const preferred = Math.min(baseHeight * 0.8, 720);
-  const sheetHeight = Math.max(220, Math.min(preferred, height - 12));
-  const sheetTop = top + Math.max(8, height - sheetHeight - 8);
+  const available = keyboardOpen ? height - 12 : baseHeight - 16;
+  const sheetHeight = Math.max(220, Math.min(preferred, available));
+  const sheetTop = keyboardOpen
+    ? top + Math.max(8, height - sheetHeight - 8)
+    : Math.max(8, baseHeight - sheetHeight - 8);
 
   elements.panel.style.setProperty('--chat-vv-height', `${Math.round(sheetHeight)}px`);
   elements.panel.style.setProperty('--chat-vv-top', `${Math.round(sheetTop)}px`);

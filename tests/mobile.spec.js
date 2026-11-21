@@ -85,7 +85,25 @@ test('anima la apertura y el cierre del chat móvil', async ({ page }) => {
   await expect(panel).toHaveClass(/chat-panel--mobile/);
   await expect(panel).toHaveCSS('animation-name', 'chat-panel-in');
   await expect(panel).toHaveCSS('user-select', 'none');
+  await expect(page.locator('#chat-messages')).toHaveCSS('user-select', 'none');
   await expect(page.locator('#map')).toHaveCSS('pointer-events', 'none');
+  await expect(page.locator('body')).toHaveCSS('user-select', 'none');
+  await expect(page.locator('body')).toHaveCSS('touch-action', 'none');
+
+  const mapPane = page.locator('.leaflet-map-pane');
+  const mapTransform = await mapPane.evaluate((element) => element.style.transform);
+  await page.mouse.move(200, 80);
+  await page.mouse.down();
+  await page.mouse.move(260, 130, { steps: 6 });
+  await page.mouse.up();
+  await page.mouse.move(200, 500);
+  await page.mouse.down();
+  await page.mouse.move(250, 550, { steps: 6 });
+  await page.mouse.up();
+  expect(await mapPane.evaluate((element) => element.style.transform)).toBe(
+    mapTransform,
+  );
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
   await panel.evaluate((element) =>
     Promise.all(element.getAnimations().map((animation) => animation.finished)),
