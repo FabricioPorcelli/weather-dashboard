@@ -1654,7 +1654,12 @@ textarea {
   outline-offset: 2px;
 }
 
-body.chat-open {
+html.chat-sheet-open {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body.chat-sheet-open {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -1666,18 +1671,23 @@ body.chat-open {
   touch-action: none;
 }
 
-/* Con el chat móvil abierto, el mapa de fondo queda visible pero inerte. */
-body.chat-open::before {
-  content: '';
+.chat-backdrop {
   position: fixed;
   inset: 0;
   z-index: 2999;
   background: transparent;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-body.chat-open #map {
+.chat-backdrop[hidden] {
+  display: none;
+}
+
+/* Con el chat móvil abierto, el mapa de fondo queda visible pero inerte. */
+body.chat-sheet-open #map {
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
@@ -1955,8 +1965,8 @@ body.chat-open #map {
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    overscroll-behavior: contain;
-    touch-action: pan-y;
+    overscroll-behavior: none;
+    touch-action: none;
     z-index: 3000;
   }
 
@@ -1996,9 +2006,15 @@ body.chat-open #map {
     max-height: none;
     margin-bottom: 8px;
     padding-right: 0;
-    overscroll-behavior: contain;
+    overscroll-behavior: none;
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Sin mensajes no hay nada que desplazar: el fondo no debe moverse. */
+  .chat-panel--mobile .chat__messages:empty {
+    overflow: hidden;
+    touch-action: none;
   }
 
   .chat-panel--mobile .chat__bubble {

@@ -85,13 +85,27 @@ test('anima la apertura y el cierre del chat móvil', async ({ page }) => {
   await expect(panel).toHaveClass(/chat-panel--mobile/);
   await expect(panel).toHaveCSS('animation-name', 'chat-panel-in');
   await expect(panel).toHaveCSS('user-select', 'none');
+  await expect(panel).toHaveCSS('touch-action', 'none');
   await expect(page.locator('#chat-messages')).toHaveCSS('user-select', 'none');
+  await expect(page.locator('#chat-messages')).toHaveCSS('touch-action', 'none');
+  await expect(page.locator('#chat-backdrop')).toBeVisible();
+  await expect(page.locator('#chat-backdrop')).toHaveCSS(
+    'touch-action',
+    'none',
+  );
   await expect(page.locator('#map')).toHaveCSS('pointer-events', 'none');
   await expect(page.locator('body')).toHaveCSS('user-select', 'none');
   await expect(page.locator('body')).toHaveCSS('touch-action', 'none');
 
+  await panel.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
+
   const mapPane = page.locator('.leaflet-map-pane');
   const mapTransform = await mapPane.evaluate((element) => element.style.transform);
+  const panelTop = await panel.evaluate(
+    (element) => element.getBoundingClientRect().top,
+  );
   await page.mouse.move(200, 80);
   await page.mouse.down();
   await page.mouse.move(260, 130, { steps: 6 });
@@ -104,25 +118,25 @@ test('anima la apertura y el cierre del chat móvil', async ({ page }) => {
     mapTransform,
   );
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
-
-  await panel.evaluate((element) =>
-    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  expect(
+    await panel.evaluate((element) => element.getBoundingClientRect().top),
+  ).toBe(panelTop);
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe(
+    'chat-input',
   );
+
   const box = await panel.boundingBox();
   expect(box.height).toBeLessThan(844 * 0.9);
   expect(box.height).toBeGreaterThan(844 * 0.7);
   expect(box.y).toBeGreaterThan(40);
 
-  const closeAnimation = await panel.evaluate((element) => {
-    element.classList.add('chat-panel--closing');
-    const name = getComputedStyle(element).animationName;
-    element.classList.remove('chat-panel--closing');
-    return name;
-  });
-  expect(closeAnimation).toBe('chat-panel-out');
-
-  await page.locator('#chat-close').click();
+  const closeBox = await page.locator('#chat-close').boundingBox();
+  await page.mouse.click(
+    closeBox.x + closeBox.width / 2,
+    closeBox.y + closeBox.height / 2,
+  );
   await expect(panel).toBeHidden();
+  await expect(page.locator('#chat-backdrop')).toBeHidden();
   await expect(page.locator('#map')).toHaveCSS('pointer-events', 'auto');
 });
 

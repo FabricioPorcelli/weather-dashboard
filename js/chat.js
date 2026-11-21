@@ -128,6 +128,7 @@ export function initChat({
   userId = loadUserId();
   elements = {
     panel: document.querySelector('#chat-panel'),
+    backdrop: document.querySelector('#chat-backdrop'),
     open: document.querySelector('#chat-open'),
     close: document.querySelector('#chat-close'),
     form: document.querySelector('#chat-form'),
@@ -148,8 +149,32 @@ export function initChat({
   });
 
   elements.open.addEventListener('click', openChatWindow);
+  elements.close?.addEventListener('pointerdown', (event) => {
+    // Cierra antes de que el foco del input cambie y mueva la hoja.
+    event.preventDefault();
+    closeChatWindow();
+  });
   elements.close?.addEventListener('click', closeChatWindow);
   elements.suggestions?.addEventListener('click', handleSuggestionClick);
+  elements.backdrop?.addEventListener('pointerdown', (event) => {
+    // Mantiene el foco del chat: sin blur no se cierra el teclado ni salta la hoja.
+    event.preventDefault();
+  });
+  elements.panel.addEventListener('pointerdown', (event) => {
+    if (!MOBILE_QUERY.matches) {
+      return;
+    }
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest(
+        'button, a, input, textarea, select, [contenteditable="true"], .chat__bubble, .chat__confidence',
+      )
+    ) {
+      return;
+    }
+    event.preventDefault();
+  });
   document.addEventListener('keydown', handleChatKeydown);
   window.addEventListener('popstate', handlePopState);
   window.addEventListener('resize', handleViewportChange);
@@ -293,7 +318,11 @@ function finishClose() {
   elements.panel.style.removeProperty('--chat-vv-height');
   elements.panel.style.removeProperty('--chat-vv-top');
   mobileChatBaseHeight = 0;
-  document.body.classList.remove('chat-open');
+  if (elements.backdrop) {
+    elements.backdrop.hidden = true;
+  }
+  document.documentElement.classList.remove('chat-sheet-open');
+  document.body.classList.remove('chat-sheet-open');
   closePopup?.();
   removeChatHistoryState();
   elements.open?.focus({ preventScroll: true });
@@ -403,7 +432,11 @@ function openMobileChat() {
   elements.panel.classList.add('chat-panel--mobile');
   elements.panel.setAttribute('role', 'dialog');
   elements.panel.setAttribute('aria-modal', 'true');
-  document.body.classList.add('chat-open');
+  if (elements.backdrop) {
+    elements.backdrop.hidden = false;
+  }
+  document.documentElement.classList.add('chat-sheet-open');
+  document.body.classList.add('chat-sheet-open');
   mobileChatBaseHeight = window.innerHeight;
   pushChatHistoryState();
   closePopup?.();

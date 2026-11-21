@@ -556,6 +556,12 @@ function blurActiveInputOnPointerDown(event) {
     return;
   }
 
+  // El chat conserva el foco al tocar su fondo: así no salta el teclado
+  // ni se mueve la hoja entre pointerdown y pointerup.
+  if (active.id === 'chat-input') {
+    return;
+  }
+
   const target = event.target;
   if (
     target instanceof Element &&
