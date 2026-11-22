@@ -1888,8 +1888,16 @@ body.chat-sheet-open #map {
   }
 
   .forecast-tab {
-    min-height: 44px;
-    padding: 10px 12px;
+    position: relative;
+    min-height: 32px;
+    padding: 4px 10px;
+  }
+
+  /* El chip se ve más bajo, pero el área táctil sigue siendo de 44 px. */
+  .forecast-tab::after {
+    content: '';
+    position: absolute;
+    inset: -6px 0;
   }
 
   .locate-button {

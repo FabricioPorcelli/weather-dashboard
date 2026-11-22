@@ -80,8 +80,18 @@ test('mantiene targets táctiles cómodos en móvil', async ({ page }) => {
   await page.goto('/');
   await searchRosario(page);
 
-  const tabBox = await page.getByRole('tab', { name: 'Por hora' }).boundingBox();
-  expect(tabBox.height).toBeGreaterThanOrEqual(44);
+  const tab = page.getByRole('tab', { name: 'Por hora' });
+  const tabBox = await tab.boundingBox();
+  expect(tabBox.height).toBeGreaterThanOrEqual(32);
+  const tabHitHeight = await tab.evaluate((element) => {
+    const inset = getComputedStyle(element, '::after');
+    return (
+      element.getBoundingClientRect().height -
+      parseFloat(inset.top) -
+      parseFloat(inset.bottom)
+    );
+  });
+  expect(tabHitHeight).toBeGreaterThanOrEqual(44);
 
   const locateBox = await page.locator('#locate-button').boundingBox();
   expect(locateBox.height).toBeGreaterThanOrEqual(44);
