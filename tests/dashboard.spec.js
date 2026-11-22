@@ -325,6 +325,24 @@ test('abre el chat, muestra sugerencias y lo cierra tocando el marcador', async 
   await expect(page.locator('.leaflet-popup')).toHaveCount(1);
 });
 
+test('en escritorio usa dos columnas y evita scroll innecesario', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto('/');
+  await searchRosario(page);
+
+  const columns = await page.locator('.card__details').evaluate((element) => {
+    return getComputedStyle(element).gridTemplateColumns.split(' ').length;
+  });
+  expect(columns).toBe(2);
+
+  const hasScroll = await page.locator('.panel').evaluate((element) => {
+    return element.scrollHeight > element.clientHeight + 1;
+  });
+  expect(hasScroll).toBe(false);
+});
+
 test('expone el chat como diálogo y lo cierra con Escape', async ({ page }) => {
   await page.goto('/');
   await searchRosario(page);
